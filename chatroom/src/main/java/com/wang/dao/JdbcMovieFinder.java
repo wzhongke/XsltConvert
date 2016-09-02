@@ -17,6 +17,10 @@ import java.util.List;
  */
 @Repository
 public class JdbcMovieFinder{
+    /**
+     *  Instances of the JdbcTemplate class are threadsafe once configured. This is important because it means that you can configure a
+     *  single instance of a single instance of JdbcTemplate and then safely inject this shared reference into multiple DAOs.
+     */
 
     private JdbcTemplate jdbcTemplate;
 
