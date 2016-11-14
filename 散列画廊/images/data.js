@@ -1,5 +1,5 @@
 var data = [];
-var dataStr = '1、左耳<br>\
+var dataStr = '1、爱你<br>\
 <br>\
 ·医学专家说左耳是靠近心脏最近的地方，甜言蜜语要说给左耳听。<br>\
 ·喜欢的歌，静静地听，喜欢的人，远远地看！<br>\
@@ -186,7 +186,7 @@ var d = dataStr.split('<br><br><br>');
 for (var i = 0; i < d.length; i++) {
     var c = d[i].split('<br><br>');
     data.push({
-        img: c[0].replace('、', ' ') + '.jpg',
+        img: "images/" + c[0].split('、')[0] + '.jpg',
         caption: c[0].split('、')[1],
         desc: c[1]
     });

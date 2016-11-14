@@ -222,6 +222,8 @@
 <script type="text/javascript" src="images/data.js"></script>
 <script>
 
+	var photoCenter = null,
+        navCurrent = null;
 
     // 3. 通用函数
     function g(selector) {
@@ -280,15 +282,13 @@
 
         return ranges;
     }
-
-	var photoCenter = null,
-        navCurrent = null;
     
     // 5. 排序海报
     function rsort(n){
         var _photos = g('.photo');
         var photos = [];
- 		if (typeof photoCenter != 'undefined'){
+        console.log(photoCenter);
+ 		if (photoCenter != null){
         	photoCenter.className = photoCenter.className.replace(/\s*photo-center\s*/, '')
                     .replace(/\s*photo-front\s*/, '')
                     .replace(/\s*photo-back\s*/, '');
