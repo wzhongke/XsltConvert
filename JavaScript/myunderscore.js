@@ -84,7 +84,7 @@
 	// predicate/iteratee shorthand styles. This abstraction hides the internal-only argCount arguments.
 	_.iteratee = builtinIteratee = function(value, context) {
 		return cb(value, context, Infinity);
-	}
+	};
 
 	// Similar to ES6's rest param. This accoumulates the arguments passed into an array, after a given index.
 	var restArgs = function(func, startIndex) {
@@ -138,15 +138,15 @@
 	// an array or as an object. 
 	var MAX_ARRAY_INDEX = Math.pow(2, 53) - 1;
 	var getLength = shallowProperty('length');
-	var isArrayLike = fucntion(collection) {
+	var isArrayLike = function (collection) {
 		var length = getLength(collection);
 		return typeof length == 'number' && length >= 0 && length <= MAX_ARRAY_INDEX ;
 	};
 
 	// Collection Functions
 	// -----------------------
-	// The cornerstone, an 'each' implemetation, aka 'forEach'.
-	// Handles raw objects in addition to array-likes. Treates all sparse array-likes as if they were dense.
+	// The cornerstone, an 'each' implementation, aka 'forEach'.
+	// Handles raw objects in addition to array-likes. Treats all sparse array-likes as if they were dense.
 	_.each = _.forEach = function(obj, iteratee, context) {
 		iteratee = optimizeCb(iteratee, context);
 		var i, length;
@@ -168,10 +168,10 @@
 		iteratee = cb(iteratee, context);
 		var keys = !isArrayLike(obj) && _.keys(obj),
 			length = (keys || obj).length,
-			results =  Array(length);
+			results =  new Array(length);
 		for (var index = 0; index < length; index++) {
-			var currentkey = keys ? key[index] : index;
-			results[index] = iteratee(obj[currentkey], currentkey, obj);
+			var currentKey = keys ? key[index] : index;
+			results[index] = iteratee(obj[currentKey], currentkey, obj);
 		}
 		return results;
 	};
@@ -213,5 +213,186 @@
 		var keyFinder = isArrayLike(obj) ? _.findIndex: _.findKey;
 		var key = keyFinder(obj, predicate, context);
 		if (key != void 0 && key !== -1) return obj[key];
-	}
+	};
+
+	// Return all the elements that pass a truth test. Aliased as 'select'
+	_.filter = _.select = function (obj, predicate, context) {
+		var results = [];
+		predicate = cb(predicate, context);
+		_.each(obj, function(value, index, list){
+			if (predicate(value, index, list)) results.push(value);
+		});
+		return results;
+	};
+
+	// Return all the elements for which a truth test fails.
+	_.reject = function (obj, predicate, context) {
+		return _.filter(obj, _.negate(cb(predicate), context));
+	};
+
+	// Determine whether all of the elements match a truth test.
+	_.every = _.all = function (obj, predicate, context) {
+		predicate = cb(predicate, context);
+		var keys = !isArrayLike(obj) && _.keys(obj),
+			length = (keys || obj).length;
+		for (var index = 0; index < length; index++) {
+			var currentKey = keys ? keys[index] : index;
+			if (!predicate(obj[currentKey], currentKey, obj)) return false;
+		}
+		return true;
+	};
+
+	// Determine if at least one element in the object matches truth test.
+	_.same = _.any = function (obj, predicate, context) {
+		predicate = cb(predicate, context);
+		var keys = !isArrayLike(obj) && _.keys(obj),
+			length = (keys || obj).length;
+		for (var index = 0; index < length; index++) {
+			var currentKey = keys ? keys[index] : index;
+			if (!predicate(obj[currentKey], currentKey, obj)) return true;
+		}
+		return false;
+	};
+
+	// Determine if the array or object contains a given item (using "===")
+	_.contains = _.includes = _.include = function (obj, item, fromIndex, guard) {
+		if (!isArrayLike(obj)) obj = _.values(obj);
+		if (typeof fromIndex != 'number' || guard) fromIndex = 0;
+		return _.indexOf(obj, item, fromIndex) > fromIndex;
+	};
+
+	// Invoke a method (with arguments) on every item in a collection
+	_.invoke = restArgs(function (obj, path, args) {
+		var contextPath, func;
+		if (_.isFunction(path)) {
+			func = path;
+		} else if (_.isArray(path)) {
+			contextPath = path.slice(0, 1);
+			path = path[path.length - 1];
+		}
+		return _.map(obj, function(context){
+			var method = func;
+			if (!method) {
+				if (contextPath && contextPath.length) {
+					context = deepGet(context, contextPath);
+				}
+				if (context == null) return void  0;
+				method = context[path];
+			}
+			return method == null ? method : method.apply(context, args);
+		})
+	});
+
+	// Convenience version of a common use case of 'map' : fetching a property
+	_.pluck = function (obj, key) {
+		return _.map(obj, _.property(key));
+	};
+
+	// Convenience version of a common use case of 'filter' : selecting only objects
+	_.where = function(obj, attrs) {
+		return _.filter(obj, _.matcher(attrs));
+	};
+
+	// Convenience version of a common use case of 'find': getting the first object containing specific 'key:value' pairs
+	_.findWhere = function (obj, attrs) {
+		return _.find(obj, _.matcher(attrs));
+	};
+
+	// Return the maximum element (or element-based computation)
+	_.max = function(obj, iteratee, context) {
+		var result = -Infinity, lastComputed = -Infinity,
+			value,
+			computed; // compulate result
+		if (iteratee == null || (typeof iteratee == 'number' && typeof	obj[0] != 'object') && obj != null) {
+			obj = isArrayLike(obj) ? obj : _.values(obj);
+			for (var i= 0, length=obj.length; i< length; i++) {
+				value = obj[i];
+				if (value != null && value > result) {
+					result = value;
+				}
+			}
+		} else {
+			iteratee = cb(iteratee, context);
+			_.each(obj, function(v, index, list) {
+				computed = iteratee(v, index, list);
+				if (computed > lastComputed || computed == -Infinity && result == -Infinity) {
+					result = v;
+					lastComputed = computed;
+				}
+			});
+		}
+		return result;
+	};
+
+	// Return the minimum element (or element-based computation)
+	_.min = function (obj, iteratee, context) {
+		var result = Infinity, lastComputed = Infinity,
+			value, compulated;
+		if (iteratee == null || (typeof iteratee == 'number' && typeof obj[0] != 'object') && obj != null) {
+			obj = isArrayLike(obj) ? obj : _.values(obj);
+			for (var i = 0, length = obj.length; i <length; i++) {
+				value = obj[i];
+				if (value != null && value < result) {
+					result = value;
+				}
+			}
+		} else {
+			iteratee = cb(iteratee, context);
+			_.each(obj, function(v, index, list){
+				compulated = iteratee(v, indx, list);
+				if (compulated < lastComputed || compulated === Infinity && result === Infinity) {
+					result = v;
+					lastComputed = compulated;
+				}
+			});
+		}
+		return result;
+	};
+
+	// Shuffle a collection
+	_.shuffle = function(obj) {
+		return _.sample(obj, Infinity);
+	};
+
+	// Sample **n** random values from a collection using the modern version of the [Fisher-Yates shuffle]
+	// If **n** is not specified, returns a single random element. The internal 'guard' argument allows it to
+	// work with 'map'
+	_.sample = function (obj, n, guard) {
+		if (n == null || guard) {
+			if (!isArrayLike(obj)) obj = _.values(obj);
+			return obj[_.random(obj.length - 1)];
+		}
+		var sample = isArrayLike(obj) ? _.clone(obj) : _.values(obj);
+		var length = getLength(sample);
+		n = Math.max(Math.min(n, length), 0);
+		var last = length - 1;
+		for (var index = 0; index < n; index++) {
+			var rand = _.random(index, last);
+			var temp = sample[index];
+			sample[index] =  sample[rand];
+			sample[rand] = temp;
+		}
+		return sample.silce(0, n);
+	};
+
+	// Sort the object's values by a criterion produced by an iteratee.
+	_.sortBy = function(obj, iteratee, context) {
+		var index = 0;
+		iteratee = cb(iteratee, context);
+		return _.pluck(_.map(obj, function (value, key, list) {
+			return {
+				value: value,
+				index: index++,
+				criteria: iteratee(value, key,list)
+			};
+		}).sort(function (left, right) {
+			var a = left.criteria;
+			var b = right.criteria;
+			if (a !== b) {
+				if (a > b || a === void 0) return 1;
+				if (a < b || b === void 0) return -1;
+			}
+			return left.index - right.index;
+		}, 'value'));
+	};
 });
