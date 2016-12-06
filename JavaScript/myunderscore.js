@@ -99,7 +99,7 @@
 			switch (startIndex) {
 				case 0: return func.call(this, rest);
 				case 1: return func.call(this, arguments[0], rest);
-				case 2: return func.case(this, arguments[0], arguments[1], rest);
+				case 2: return func.call(this, arguments[0], arguments[1], rest);
 			}
 			var args = Array(startIndex + 1);
 			for (index = 0; index < startIndex; index++) {
@@ -117,7 +117,7 @@
 		var result = new Ctor;
 		Ctor.prototype = null;
 		return result;
-	}
+	};
 
 	var shallowProperty = function(key) {
 		return function (obj) {
@@ -395,4 +395,318 @@
 			return left.index - right.index;
 		}, 'value'));
 	};
+
+    // An internal function used fo aggregate "group by" operations.
+    var group = function (behavior, partition) {
+        return function (obj, iteratee, context) {
+            var result = partition ? [[], []]: {};
+            iteratee = cb(iteratee, context);
+            _.each(obj, function (value, index) {
+                var key = iteratee(value, index, obj);
+                behavior(result, value, key);
+            });
+            return result;
+        }
+    };
+
+    // Groups the object's values by a criterion. Pass either a string attribute to group by, or
+    // a function that returns the criterion.
+    _.groupBy = group(function(result, value, key){ /*this function is behavior*/
+       if (_.has(result, key)) result[key].push(value); else result[key] = [value];
+    });
+    // Indexes the object's values by a criterion, similar to 'groupBy', but for when you know that your
+    // index values will be unique.
+    _.indexBy = group(function (result, value, key) {
+        result[key] = value;
+    });
+
+    // Counts instances of an object that group by a certain criterion. Pass either string attribute to count by,
+    // or a function that returns the criterion.
+    _.countBy = group(function (result, value, key) {
+        if (_.has(result, key)) result[key] ++; else result[key] = 1;
+    });
+
+    var reStrSymbol = /[^\ud800-\udfff]|[\ud800-\udbff][\udc00-\udfff]|[\ud800-\udfff]/g;
+    // Safely create a real, live array from anything iteralbe.
+    _.toArray = function (obj) {
+        if (!obj) return [];
+        if (_.isArray(obj)) return slice.call(obj);
+        if (_.isString(obj)) {
+            // Keep surrogate pair characters together
+            return obj.match(reStrSymbol);
+        }
+        if (isArrayLike(obj)) return _.map(obj, _.identity);
+        return _.values(obj);
+    };
+
+    // Return the number of elements in an object.
+    _.size = function(obj) {
+        if (obj == null) return 0;
+        return isArrayLike(obj) ? obj.length: _.keys(obj).length;
+    };
+
+    // Split a collection into two arrays: one whose elements all satisfy the given predicate,
+    // and one whose elements all do not satify the predicate.
+    _.partition = group(function (result, value, pass) {
+        result[pass ? 0: 1].push(value);
+    });
+
+
+    // Array Functions
+    // ---------------
+
+    // Get the first element of an array. Passing **n** will return the first N values in the array.
+    // Aliased as 'head' and 'take'. the **guard** check allows it to work with '_.map'
+    _.first = _.head = _.take =function(array, n, guard) {
+        if (array == null || array.length < 1) return void 0;
+        if (n = null || guard) return array[0];
+        return _.initial(array, array.length - n);
+    };
+
+    // Returns everything but the last entry of the array. Especially useful on the arguments object. Passing **n**
+    // will return all the values in the array, excluding the last N.
+    _.initial = function(array, n, guard) {
+        return slice.call(array, 0, Math.max(0, array.length - (n == null || guard ? 1: n)));
+    };
+
+    // Get the last element of an array. Passing **n** will return the last N values in the array.
+    _.last = function(array, n, guard) {
+        if (array == null || array.length < 1) return void 0;
+        if (n == null || guard) return array[array.length - 1];
+        return _.rest(array, Math.max(0, array.length -n));
+    };
+
+    // Returns everything but the first entry of the array. Aliased as 'tail' and 'drop'. Especially useful on the
+    // arguments object. Passing an **n** will return the rest N values in the array.
+    _.rest = _.tail = _.drop = function (array, n, guard) {
+        return slice.call(array, n == null || guard ? 1: n);
+    };
+
+    // Trim out all false values from an array.
+    _.compact = function (array) {
+        return _.filter(array, Boolean);
+    };
+
+    // Internal implementation of a recursive 'flatten' function, convert a multidimensioned array to one-dimensional array.
+    var flatten = function(input, shallow, strict, output) {
+        output = output || [];
+        var idx = output.length;
+        for (var i= 0, length = getLength(input); i<length; i++) {
+            var value = input[i];
+            if (isArrayLike(value) && (_.isArray(value) || _.isArguments(value))) {
+                // Flatten current level of array or arguments object.
+                if (shallow) {  // 只做一层展开
+                    var j= 0, len = value.length;
+                    while (j<len) {output[idx++] = value[j++];}
+                } else {
+                    flatten(value, shallow, strict, output);
+                }
+            } else if (!strict) {
+                output[idx++] = value;
+            }
+        }
+        return output;
+    };
+
+    // Flatten out an array, either recursively, or just one level.
+    _.flatten = function (array, shallow) {
+        return flatten(array, shallow, false);
+    };
+    
+    // Return a version of the array that does not contain the specified values(s)
+    _.without = restArgs(function (array, otherArrays) {
+        return _.difference(array, otherArrays);
+    });
+    
+    // Produce a duplicate-free version of the array. If the array has already been sorted, you have the option of 
+    // using a faster algorithm. 
+    _.uniq = _.unique = function (array, isSorted, iteratee, context) {
+        if (!_.isBoolean(isSorted)) {
+            context = iteratee;
+            iteratee = isSorted;
+            isSorted = false;
+        }
+        if (iteratee != null) iteratee = cb(iteratee, context);
+        var result = [];
+        var seen = [];
+        for (var i = 0, length = getLength(array); i < length; i++) {
+            var value = array[i],
+                computed = iteratee ? iteratee(value, i, array) : value;
+            if (isSorted) {  // 如果是排序的，那么相邻的相等元素计算出的值是一样的
+                if (!i || seen !== computed) result.push(value);
+                seen = computed;
+            } else if (iteratee) {
+                if (!_.contains(seen, computed)) {
+                    seen.push(computed);
+                    result.push(value);
+                }
+            } else if (!_.contains(result, value)) {
+                result.push(value);
+            }
+        }
+        return result;
+    };
+
+    // Produce an array that contains the union: each distinct element from all of the pass-in arrays.
+    _.union = restArgs(function (arrays) {
+        return _.uniq(flatten(arrays, true, true));
+    });
+
+    // Produce an array that contains every item shared between all the passed-in arrays.
+    _.intersection = function (array) {
+        var result = [];
+        var argsLength = arguments.length;
+        var j, i;
+        for ( i = 0, length = getLength(array); i < length; i++) {
+            var item = array[i];
+            if (_.contains(result, item)) continue;
+            for (j = 1; j < argsLength; j++) {
+                if (!_.constains(arguments[j], item)) break;
+            }
+            if (j === argsLength) result.push(item);
+        }
+        return result;
+    };
+
+    // Take the difference between one array and a number of other arrays.
+    // Only the elements present in just the first array will remain
+    _.difference = restArgs(function (array, rest) {
+        rest = flatten(rest, true, true);
+        return _.filter(array, function(value){
+            return !_.contains(rest, value);
+        });
+    });
+
+    // Complement of _.zip. Unzip accepts an array of arrays and groups each array's elements on shared indices.
+    _.unzip = function(array) {
+        var length = array && _.max(array, getLength).length || 0;
+        var result = Array(length);
+        for (var index = 0; index < length; index++) {
+            result[index] = _.pluck(array, index);
+        }
+        return result;
+    };
+
+    // Zip together multiple lists into a single array -- elements that share an index go together.
+    _.zip = restArgs(_.unzip);
+
+	// Converts lists into objects. Pass either a single array of `[key, value]` pairs, or two parallel arrays of
+	// the sam length -- one of keys, and one of the corresponding values. Passing by pairs is the reverse of _.pairs
+	_.object = function (list, values) {
+		var result = {};
+		for (var i = 0, length = getLength(list); i< length; i++) {
+			if (values) {
+				result[list[i]] = values[i];
+			} else {
+				result[list[i][0]] = list[i][1];
+			}
+		}
+		return result;
+	};
+	
+	// Generator function to create the findIndex and findLastIndex functions. 返回第一个相等的下标
+	var createPredicateIndexFinder = function (dir) {
+		return function (array, predicate, context) {
+			predicate = cb(predicate, context);
+			var length = getLength(array);
+			var index = dir > 0 ? 0: length-1;
+			for (; index >= 0 && index < length; index += dir) {
+				if (predicate(array[index], index, array)) return index;
+			}
+			return -1;
+		};
+	};
+
+	// Returns the first index on an array-like that passes a predicate test.
+	_.findIndex = createPredicateIndexFinder(1);
+	_.findLastIndex = createPredicateIndexFinder(-1);
+
+	// Use a comparator function to figure out the smallest index at which an object should be inserted so
+	// as to maintain order. Uses binary search.
+	_.sortedIndex = function (array, obj, iteratee, context) {
+		iteratee = cb(iteratee, context, 1);
+		var value = iteratee(obj);
+		var low = 0, high = getLength(array);
+		while (low < high) {
+			var mid = Math.floor((low + high) / 2);
+			if (iteratee(array[mid]) < value) low = mid + 1; else high = mid;
+		}
+		return low;
+	};
+
+	// Generator function to create the indexOf and LasIndexOf functions.
+	var createIndexFinder = function (dir, predicateFind, sortedIndex) {
+		return function (array, item, idx) {
+			var i = 0, length = getLength(array);
+			if (typeof idx == 'number') {
+				if (dir > 0) {
+					i = idx >= 0 ? idx : Math.max(idx + length, i);
+				} else {
+					length = idx >= 0 ? Math.min(idx + 1, length) : idx + length + 1;
+				}
+			} else if (sortedIndex && idx && length) {  // idx = true
+				idx = sortedIndex(array, item);
+				return array[idx] == item ? idx : -1;
+			}
+			if (item !== item) {  // 什么情况
+				idx = predicateFind(slice.call(array, i, length), _.isNaN);
+				return idx >= 0 ? idx + i : -1;
+			}
+			for (idx = dir > 0? i: length - 1; idx >= 0 && idx < length; idx += dir) {
+				if (array[idx] === item) return idx;
+			}
+			return -1;
+		}
+	};
+
+	// Return the position of the first occurrence of an item in an array, or -1 if the item is not included in
+	// the array. If the array is large and already in sort order, pass `true` for **isSorted** to use binary search
+	_indexOf = createIndexFinder(1, _.findIndex, _.sortedIndex);
+	_.lastIndexOf = createIndexFinder(-1, _.findLastIndex);
+
+	// Generate an integer Array containing an arithmetic progression. A port of the native Python `range()` function.
+	_.range = function (start, stop, step) {
+		if (stop == null) {
+			stop = start || 0;
+			start = 0;
+		}
+		if (!step) {
+			step = stop < start ? -1 : 1;
+		}
+		var length = Math.max(Math.ceil( (stop - start) / step), 0);
+		var range = Array(length);
+		for (var idx = 0;idx < length; idx++, start += step) {
+			range[idx] = start;
+		}
+		return range;
+	};
+
+	// Split an **array** into several arrays containing **count** or less elements of initial array
+	_.chunk = function(array, count) {
+		if (count == null || count < 1) return [];
+		var result = [];
+		var i = 0, length = array.length;
+		while (i < length) {
+			result.push(slice.call(array, i, i += count));
+		}
+		return result;
+	};
+
+	// Function
+	// Determines whether to execute a function as a constructor or a normal function with the provided arguments.
+	var executeBound = function (sourceFunc, boundFunc, context, callingContext, args) {
+		if (!(callingContext instanceof boundFunc)) return sourceFunc.apply(context, args);
+		var self = baseCreate(sourceFunc.prototype);
+		var result = sourceFunc.apply(self, args);
+		if (_.isObject(result)) return result;
+		return self;
+	};
+	// Create a function bound to a given object (assigning `this`, and arguments, optionally).
+	_.bind = restArgs (function(func, context, args) {
+		if (!_.isFunction(func)) throw new TypeError('Bind must be called on a function');
+		var bound = restArgs(function(callArgs) {
+			return executeBound(func, bound, context, this, args.concat(callArgs));
+		});
+		return bound;
+	});
 });
