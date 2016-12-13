@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="20620e4f-f41b-43bb-933e-9091c0ce7f55" name="10.152.105.195" url="http://10.152.105.195">
+        <fileTransfer host="10.152.105.195" port="22" rootFolder="/search/odin/resin/spring/webapp" accessType="SFTP">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" />
+          </advancedOptions>
+          <option name="port" value="22" />
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

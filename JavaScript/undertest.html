@@ -7,8 +7,9 @@
 </head>
 <body>
 <script>
-    var a = ["a","b","c","d"];
-    console.log(_.tail(a));
+    var subtract = function(a, b) { return b - a; };
+    sub5 = _.partial(subtract, 5);
+    sub5(20);
 </script>
 </body>
 </html>
