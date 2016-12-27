@@ -892,6 +892,422 @@
 		// Constructor is a special case
 		var prop = 'constructor';
 		if (_.has(obj, prop) && !_.contains(keys, prop)) keys.push(prop);
+
+		while (nonEnumIdx--) {
+			prop = nonEnumerableProps[nonEnumIdx];
+			if (prop in obj && obj[porp] !== proto[prop] && !_.constains(keys, prop)) {
+				keys.push(prop);
+			}
+		}
+	};
+
+	// Retrieve the name of an object's own properties.
+	// Delegates to **ECMAScript 5**'s native `Object.keys`.
+	_.keys = function (obj) {
+		if (!_.isObject(obj)) return [];
+		if(nativeKeys) return nativeKeys(obj);
+		var keys=[];
+		for (var key in obj) if (_.has(obj, key)) keys.push(key);
+		if (hasEnumBug) collectNonEnumProps(obj, key);
+		return keys;
+	};
+
+	_.allKeys = function (obj) {
+		if (!_.isObject(obj)) return [];
+		var keys = [];
+		for (var key in obj) keys.push(key);
+		if (hasEnumBug) collectNonEnumProps(obj, keys);
+		return keys;
+	};
+
+	//Retrieve the values of an object's properties
+	_.values = function(obj) {
+		var keys = _.keys(obj);
+		var length = keys.length;
+		var values = Array(length);
+		for (var i=0; i<length; i++) {
+			values[i] = obj[keys[i]];
+		}
+		return values;
+	};
+
+	// Returns the results of applying the iteratee to each element of the object.
+	// In contrast to _.map it returns an object.
+	_.mapObject = function (obj, iteratee, context) {
+		iteratee = cb(iteratee,context);
+		var keys = _.keys(obj),
+			length = keys.length,
+			results = {};
+		for (var index = 0; index < length; index++) {
+			var currentKey = keys[index];
+			results[currentKey] = iteratee(obj[currentKey], currentKey, obj);
+		}
+		return results;
+	};
+	// example:
+	_.mapObject({start:5, end:12}, function (val, key) {
+		return val + 5;
+	});
+
+	//Convert an object into a list of `[key, value]` pairs.
+	// The opposite of _.object
+	_.pairs = function (obj) {
+		var keys = _.keys(obj);
+		var length = keys.length;
+		var pairs = Array(length);
+		for (var i=0; i<length; i++) {
+			pairs[i] = [keys[i], obj[keys[i]]];
+		}
+		return pairs;
+	};
+
+	_.pairs({one: 1, two: 2, three: 3}); // [["one", 1], ["two", 2], ["three", 3]]
+
+	// Invert the keys and values of an object. The values must be serializable.
+	_.invert = function(obj) {
+		var result = {};
+		var keys = _.keys(obj);
+		for (var i= 0, length=keys.length; i<length; i++) {
+			result[obj[keys[i]]] = keys[i];
+		}
+		return result;
+	};
+
+	_.invert({Moe: "Moses", Larry: "Louis", Curly: "Jerome"}); // {Moses: "Moe", Louis: "Larry", Jerome: "Curly"};
+
+	// Return a sorted list of the function names available on an object.
+	_.functions = _.methods = function (obj) {
+		var names = [];
+		for (var key in obj) {
+			if (_.isFunction(obj[key])) names.push(key);
+		}
+		return names.sort();
+	};
+
+	// An internal function for creating assigner functions
+	var createAssigner = function (keysFunc, defaults) {
+		return function (obj) {
+			var length = arguments.length;
+			if (defaults) obj = Object(obj);
+			if (length < 2 || obj == null) return obj;
+			for (var index = 1; index < length; index++) {
+				var source = arguments[index],
+					keys = keysFunc(source),
+					l = keys.length;
+				for (var i = 0; i < l; i++) {
+					var key = keys[i];
+					if (!defaults || obj[key] === void 0) obj[key] = source[key];
+				}
+			}
+			return obj;
+		}
+	};
+
+	// Extend a given object with all the properties in passed-in objects.
+	_.extend = createAssigner(_.allKeys);
+
+	_.extend({name:'more'}, {age:50});  // 复制所有的对象的属性到第一对象中
+
+	// Assigns a given object with all the own properties int the passed-in objects.
+	// 只复制自己的对象属性到第一个对象
+	_.extendOwn = _.assign = createAssigner(_.keys);
+
+	// Returns the first key on an object that passes a predicate test.
+	_.findKey = function(obj, predicate, context) {
+		predicate = cb (predicate, context);
+		var keys = _.keys(obj), key;
+		for (var i = 0, length = keys.length; i < length; i++) {
+			key = keys[i];
+			if (predicate(obj[key], key, obj))
+				return key;
+		}
+	};
+
+	// Internal pick helper function to determine if `obj` has key `key`.
+	var keyInObj = function (value, key, obj) {
+		return key in obj;
+	};
+	// Return a copy of the object only containing the whitelisted properties.
+	_.pick = restArgs(function(obj, keys) {
+		var result = {}, iteratee = keys[0];
+		if (obj == null) return result;
+		if (_.isFunction(iteratee)) {
+			if (keys.length > 1) iteratee = optimizeCb(iteratee, keys[1]);
+			keys = _.allKeys(obj);
+		} else {
+			iteratee = keyInObj;
+			keys = flatten(keys, false, false);
+		}
+		for (var i = 0, length = keys.length; i < length; i++) {
+			var key = keys[i];
+			var value = obj[key];
+			if (iteratee(value, key, obj)) result[key] = value;
+		}
+		return result;
+	});
+
+
+	_.pick({name:'moe', age:50, userid:'moe1'}, 'name', 'age'); // {name: 'moe', age: 50}
+	_.pick({name: 'moe', age: 50, userid: 'moe1'}, function(value, key, object) {
+		return _.isNumber(value);
+	});					// {age: 50}
+
+	// Return a copy of the object without the blacklisted properties.
+	_.omit = restArgs(function(obj, keys) {
+		var iteratee = keys[0], context;
+		if (_.isFunction(iteratee)) {
+			iteratee = _.negate(iteratee);
+			if (keys.byteLength > 1) context = keys[1];
+		} else {
+			keys = _.map(flatten(keys, false, false), String);
+			iteratee = function (value, key) {
+				return !_.constant(keys, key);
+			};
+		}
+		return _.pick(obj, iteratee, context);
+	});
+
+	// Fill in a given object with default properties.
+	_.defaults = createAssigner(_.allKeys, true);
+
+	// Creates an object that inherits from the given prototype object.
+	// If additional properties are provided then they will be added to the created object.
+	_.create = function(prototype, props) {
+		var result = baseCreate(prototype);
+		if (props) _.extendOwn(result, props);
+		return result;
+	};
+
+	// Create a (shallow-cloned) duplicate of an object
+	_.clone = function (obj) {
+		if (!_.isObject(obj)) return obj;
+		return _.isArray(obj) ? obj.slice() : _.extend({}, obj);
+	};
+
+	// Invokes interceptor with the obj, and then returns obj.
+	// The primary purpose of this method is to `tap into` a method chain, in
+	// order to perform operations on intermediate results within the chain
+	_.tap = function (obj, interceptor) {
+		interceptor(obj);
+		return obj;
+	};
+	// 执行某一函数，作为链式调用的一环
+	_.chain([1,2,3,200]).filter(function (num){return num % 2 == 0;}).tap(alert).map(function (num) {
+		return num * num;
+	}).value();
+	// Returns whether an object has a given set of `key:value` pairs
+	_.isMatch = function (object, attrs) {
+		var keys = _.keys(attrs), length = keys.length;
+		if (object == null) return !length;
+		var obj = Object(object);
+		for (var i = 0; i < length; i++) {
+			var key = keys[i];
+			if (attrs[key] !== obj[key] || !(key in obj)) return false;
+		}
+		return true;
+	};
+
+	var stooge = {name: 'moe', age: 32};
+	_.isMatch(stooge, {age: 32});       // true
+
+	// Internal recursive comparison function for `isEqual`.
+	var eq, deepEq;
+	eq = function (a, b, aStack, bStack) {
+		// 0===-0 , not identical
+		if (a === b) return a !== 0 || 1 / a === 1 / b;
+		// A strict comparison is necessary because `null == undefined`
+		if (a == null || b == null) return a === b;
+		// `NaN`s are equivalent, but non-reflexive.
+		if (a !== a) return b !== b;
+
+		var type = typeof a;
+		if (type !== 'function' && type !== 'object' && typeof b != 'object')  return false;
+		return deepEq(a, b, aStack, bStack);
+	};
+
+	// Internal recursive comparison function for `isEqual`
+	deepEq = function (a, b, aStack, bStack) {
+		// Unwrap any wrapped objects.
+		if (a instanceof _) a = a._wrapped;
+		if (b instanceof _) b = b._wrapped;
+		// Compare `[[Class]]` names.
+		var className = toString.call(a);
+		if (className !== toString.call(b)) return false;
+		switch (className) {
+			// Strings, numbers, regular expressions, dates, and booleans are compared by value.
+			case '[object RegExp]':
+			// RegExps are coerced to string for comparison (Note: '' + /a/i === '/a/i)
+			case '[object String]':
+			// Primitives and their corresponding object wrappers are equivalent; thus, `"5"` is equivalent
+			// to `new String("5")
+				return '' + a === '' + b;
+			case '[object Number]':
+				// `NaN`s are equivalent, but non-reflexive
+				// Object(NaN) is equivalent to NaN.
+				if (+a !== +a) return +b !== +b;
+				// An `eqal` comparison is performed for other numeric values.
+				return +a === 0 ? 1 / +a === 1/ b : +a === +b;
+			case '[object Date]':
+			case '[object Boolean]':
+				// Coerce dates and booleans to numeric values. Dates are compared by their
+				// millisecond representations. Note that invalid dates with millisecond representations
+				// of `NaN` are not equivalent
+				return +a === +b;
+			case '[object Symbol]':
+				return SymbolProto.valueOf.call(a) === SymbolProto.valueOf.call(b);
+		}
+		var areArrays = className === '[object Array]';
+		if (!areArrays) {
+			if (typeof a != 'object' || typeof b != 'object') return false;
+
+			// Objects with different constructors are not equivalent, but `Object`s or `Array`s from different frames are.
+			var aCtor = a.constructor, bCtor = b.constructor;
+			if (aCtor !== bCtor && !(_.isFunction(aCtor) && aCtor instanceof  aCtor
+				&& _.isFunction(bCtor) && bCtor instanceof bCtor) && ('constructor' in a && 'constructor' in b)){
+				return false;
+			}
+		}
+		// Assume equality for cyclic structures. The algorithm for detecting cyclic.
+		// Initializing stack of traversed objects.
+		// It's done here since we only need them for objects and arrays comparison
+		aStack = aStack || [];
+		bStack = bStack || [];
+		var length = aStack.length;
+		while (length --) {
+			//Linear search. Performance is inversely proportional to the number of unique nested structures.
+			if (aStack[length] === a) return bStack[length] === b;
+		}
+
+		// Add the first object to the stack of traversed objects.
+		aStack.push(a);
+		bStack.push(b);
+
+		// Recursively compare objects and arrays
+		if (areArrays) {
+			// Compare array lengths to determine if a deep comparison is necessary
+			length = a.length;
+			if (length !== b.length) return false;
+			// Deep compare the contents, ignoring non-numeric properties.
+			while (length-- ) {
+				if (!eq(a[length], b[length], aStack, bStack)) return false;
+			}
+		} else {
+			// Deep compare objects.
+			var keys = _.keys(a), key;
+			length = keys.length;
+			// Ensure that both objects contain the same number of properties before comparing deep equality.
+			if (_.keys(b).length !== length) return false;
+			while (length --) {
+				// Deep compare each member
+				key = keys[length];
+				if (!(_.has(b, key) && eq(a[key], b[key], aStack, bStack))) return false;
+			}
+		}
+		// Remove the first object from the stack of traversed objects.
+		aStack.pop();
+		bStack.pop();
+		return true;
+	};
+
+	// Perform a deep comparison to check if two objects are equal.
+	_.isEqual = function (a, b) {
+		return eq(a, b);
+	};
+
+	var moe   = {name: 'moe', luckyNumbers: [13, 27, 34]};
+	var clone = {name: 'moe', luckyNumbers: [13, 27, 34]};
+	var result = moe == clone;										// false
+	_.isEqual(moe, clone);                                           // true
+
+	// Is a given array, string, or object empty?
+	// An "empty" object has no enumerable own-properties.  如果object 不包含任何值(没有可枚举的属性)，返回true。
+	_.isEmpty = function (obj) {
+		if (obj == null) return true;
+		if (isArrayLike(obj) && (_.isArray(obj) || _.isString(obj) || _.isArguments(obj))) return obj.length === 0;
+		return _.keys(obj).length === 0;
+	};
+
+	// Is a given value a DOM element?
+	_.isElement = function (obj) {
+		return !!(obj && obj.nodeType === 1); // 两个!! 将值强制转换成布尔值
+	};
+
+	// Is a given variable an array?
+	_.isArray = nativeIsArray || function (obj) {
+			return toString.call(obj) === '[object Array]';
+		};
+
+	// Is a given variable an object
+	_.isObject = function (obj) {
+		var type = typeof obj;
+		return type === 'function' || type === 'object' && !!obj;  // false || true && !!obj
+	};
+
+	// Add some isType methods: isArguments, isFunction, isString, isNumber, isDate, isRegExp, isError,
+	// isMap, isWeakMap, isSet, isWeakSet.
+	_.each(['Arguments', 'Function', 'String', "Number", 'Date', 'RegExp', 'Error', 'Symbol', 'Map', 'WeakMap',
+		'Set', 'WeakSet'], function (name) {
+			_['is' + name] = function () {
+				return toString.call(obj) === '[object ' + name + ']';
+			}
+	});
+
+	// Define a fallback version of the method in browsers, where there isn't any inspectable 'Argument' type
+	if (!_.isArguments(arguments)) {
+		_.isArguments = function (obj) {
+			return _.has(obj, 'callee');
+		}
 	}
 
+	var nodelist = root.document && root.document.childNodes;
+	if (typeof /./ != 'function' && typeof Int8Array != 'object' && typeof nodelist != 'function') {
+		_.isFunction = function (obj) {
+			return typeof obj == 'function' || false;
+		}
+	}
+
+	// Is a given object a finite number?
+	_.isFinite = function (obj) {
+		return !_.isSymbol(obj) && isFinite(obj) && !isNaN(parseFloat(obj));
+	};
+
+	// Is the given value `NaN`?
+	_.isNaN = function (obj) {
+		return _.isNumber(obj) && isNaN(obj);
+	};
+
+	// Is a given value a boolean?
+	_.isBoolean = function(obj) {
+		return obj === true || obj === false || toString.call(obj) === '[object Boolean]';
+	};
+
+	_.isNull = function(obj) {
+		return obj === null;
+	};
+
+	// Is a given variable undefined?
+	_.isUndefined = function (obj) {
+		return obj === void 0;
+	};
+
+	// Shortcut function for checking if an object has a given property directly on itself (not on a prototype)
+	_.has = function (obj, path) {
+		if (!_.isArray(path)) {
+			return obj != null && hasOwnProperty.call(obj, path);
+		}
+		var length = path.length;
+		for (var i = 0; i < length; i++) {
+			var key = path[i];
+			if (obj == null || !hasOwnProperty.call(obj, key)) {
+				return false;
+			}
+			obj = obj[key];
+		}
+		return !!length;
+	};
+
+	_.noConflict = function () {
+		root._ = previousUnderscore;
+		return this;
+	}
 });
