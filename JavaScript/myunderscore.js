@@ -1309,5 +1309,278 @@
 	_.noConflict = function () {
 		root._ = previousUnderscore;
 		return this;
+	};
+
+	// Keep the identity function around for default iteratees.
+	_.identity = function(value) {
+		return value;
+	};
+
+	// Predicate-generating functions. Often useful outside of Underscore.
+	_.constant = function (value) {
+		return function () {
+			return value;
+		};
+	};
+
+
+	// 返回undefined
+	_.noop = function(){};
+
+	// 返回一个函数，这个函数返回任何传入的对象的key属性
+	_.property = function(path) {
+		if (!_.isArray(path)) {
+			return shallowProperty(path);
+		}
+		return function(obj) {
+			return deepGet(obj, path);
+		};
+	};
+
+	var moe1 = {name:"moe"};
+	console.log("moe" === _.property('name')(moe1));
+
+	// Generates a function for a given object that returns a given property.
+	_.propertyOf = function(obj) {
+		if (obj == null) {
+			return function () {}
+		}
+		return function(path) {
+			return !_.isArray(path) ? obj[path] : deepGet(obj, path);
+		};
+	};
+
+	// Returns a predicate for checking whether an object has a given set of `key:value` pairs.
+	_.matcher = _.matches = function (attrs) {
+		attrs = _.extendOwn({}, attrs);
+		return function(obj) {
+			return _.isMatch(obj, attrs);
+		};
+	};
+
+	// Run a function **n** times.
+	_.times = function (n, iteratee, context) {
+		var accum = Array(Math.max(0, n));
+		iteratee = optimizeCb(iteratee, context, 1);
+		for (var i = 0; i < n; i++) accum[i] = iteratee(i);
+		return accum;
+	};
+
+	// Return a random integer between min and max (inclusive).
+	_.random = function (min, max) {
+		if (max == null) {
+			max = min;
+			min = 0;
+		}
+		return min + Math.floor(Math.random() * (max - min + 1));
+	};
+
+	// A (possible faster) way to get the current timestamp as an integer.
+	_.now = Date.now || function () {
+			return new Date().getTime();
+		};
+
+	// List of HTML entities for escaping
+	var escapeMap = {
+		'&': '&amp;',
+		'<': '&lt;',
+		'>': '&gt;',
+		'"': '&quot;',
+		"'": '&#x27;',
+		'`': '&#x60;'
+	};
+
+	var unescapeMap = _.invert(escapeMap);
+
+	// Functions for escaping and unescaping string to/from HTML interpolation
+	var createEscapter = function (map) {
+		var escaper = function (match) {
+			return map[match];
+		};
+		// Regexes for identifying a key that needs to be escaped.
+		var source = '(?:' + _.keys(map).join('|') + ")";
+		console.log(source);
+		var testRegexp = RegExp(source);
+		var replaceRegexp = RegExp(source, g);
+		return function (string) {
+			string = string == null ? '' : '' + string;
+			return testRegexp.test(string) ? string.replace(replaceRegexp, escaper) : string;
+		};
+	};
+
+	_.escape = createEscapter(escapeMap);
+	_.unescape = createEscapter(unescapeMap);
+
+	// Traverse the children of `obj` along `path`. If a child is a function, it is invoked with its parent as context.
+	// Returns the value of the final child, or `fallback` if any child is undefined.  链式调用
+	_.result = function(obj, path, fallback) {
+		if (!_.isArray(path)) path = [path];   // 如果不是数组，将其转换为数组
+		var length = path.length;
+		if (!length) {
+			return _.isFunction(fallback) ? fallback.call(obj) : fallback;
+		}
+
+		for (var i = 0; i < length; i++) {
+			var prop = obj == null ? void 0 : obj[path[i]];
+			if (prop === void 0) {
+				prop = fallback;
+				i = length; // Ensure we don't continue iterating.
+			}
+			obj = _.isFunction(prop) ? prop.call(obj) : prop;
+		}
+		return obj;
+	};
+
+	// Generate a unique integer id (unique within the entire client session). Useful for temporary DOM ids.
+	var idCount = 0;
+	_.uniqueId = function (prefix) {
+		var id = ++idCount + '';
+		return prefix ? prefix + id : id;
+	};
+
+	_.templateSettings = {
+		evaluate: /<%([\s\S]+?)%>/g,
+		interpolate: /<%=([\s\S]+?)/g,
+		escape: /<%-([\s\S]+?)%>/g
+	};
+
+	// When customizing `templateSettings`, if you don't want to define an interpolation,evaluation or escaping regex,
+	// we need one that is guaranteed not to match.
+	var noMatch = /(.)^/;
+
+	//Certain characters need to be escaped so that they can be put into a string literal.
+	var escapes = {
+		"'": "'",
+		'\\': '\\',
+		'\r': 'r',
+		'\n': 'n',
+		'\u2028': 'u2028',
+		'\u2029': 'u2029'
+	};
+
+	var escapeRegExp = /\\|'|\r|\n|\u2028|\u2029/g;
+
+	var escapeChar = function (match) {
+		return '\\' + escapes[match];
+	};
+
+	var regex = /fooBar/ig;
+	console.log(regex.source); // "fooBar", doesn't contain /.../ and "ig".
+
+	// JavaScript micro-templating, similar to John Resig's implementation. Underscore templating handles arbitrary
+	// delimiters, preserves whitespace, and correctly escapes quotes within interpolated code.
+	// NB: `oldSetting` only exists for backwards compatibility.
+	_.template = function(text, settings, oldSettings) {
+		if (!settings && oldSettings) settings = oldSettings;
+		settings = _.defaults({}, settings, _.templateSettings);
+		// Combine delimiters into one regular expression via alternation.
+		var matcher = RegExp([
+			(settings.escape || noMatch).source,
+			(settings.interpolate || noMatch).source,   //
+			(settings.evaluate || noMatch).source
+		].join('|') + '|$', 'g');
+
+		// Compile the template source, escaping string literals appropriately.
+		var index = 0;
+		var source = "__p+='";
+		text.replace(matcher, function (match, escape, interpolate, evaluate, offset) {
+			source += text.slice(index, offset).replace(escapeRegExp, escapeChar);
+			index = offset + match.length;
+			if (escape) {
+				source += "'+\n((__t=(" + escape + "))==null?'':_.escape(__t))+\n";
+			} else if (interpolate) {
+				source += "'+\n((__t=(" + interpolate + "))==null?'':__t)+\n"
+			} else if (evaluate) {
+				source += "';\n" + evaluate + "\n__p+='";
+			}
+
+			// Adobe VMs need the match returned to produce the correct offset.
+			return match;
+		});
+		source += "';\n";
+
+		// If a variable is not specified, place data values in local scope.
+		if (!settings.variable) source = 'with(obj||{}{\n' + source + '}\n';
+
+		source = "var __t, __p='', __j=Array.prototype.join," +
+				"print=function(){__P+=__j.call(arguments,'');};\n" +
+				source + 'return __p;\n';
+		var render;
+		try{
+			render = new Function(settings.variable || 'obj', '_', source);
+		} catch (e) {
+			e.source = source;
+			throw e;
+		}
+
+		var template = function (data) {
+			return render.call(this, data, _);
+		};
+
+		// Provide the compiled source as a convenience for precompilation
+		var argument = settings.variable || 'obj';
+		template.source = 'function(' + argument +'){\n' + source + '}';
+		return template;
+	};
+
+	var compiled = _.template("hello: <%= name %>");
+	compiled({name: 'moe'});   //   "hello: moe"
+
+	// Add a "chain" function. Start chaining a wrapped Underscore object.
+	_.chain = function (obj) {
+		var instance = _(obj);
+		instance._chain = true;
+		return instance;
+	};
+
+	// Helper function to continue chaining intermediate results.
+	var chainResult = function (instance, obj) {
+		return instance._chain ? _(obj).chain() : obj;
+	};
+
+	// Add your own custom functions to the Underscore object.
+	_.mixin = function (obj) {
+		_.each(_.functions(obj), function (name) {
+			var func = _[name] = _obj[name];
+			_.prototype[name] = function () {
+				var args = [this._wrapped];
+				push.apply(args, arguments);
+				return chainResult(this, func.apply(_, args));
+			};
+		});
+		return _;
+	};
+
+	// Add all of the Underscore functions to the wrapper object.
+	_.mixin(_);
+
+	// Add all mutator Array functions to the wrapper
+	_.each(['pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift'], function(name) {
+		var method = ArrayProto[name];
+		_.prototype[name] = function() {
+			var obj = this._wrapped;    // 对象是 _
+			method.apply(obj, arguments);
+			if ((name === 'shift' || name === 'splice') && obj.length === 0) delete obj[0];
+			return chainResult(this, obj);
+		};
+	});
+
+	// Extracts the result from a wrapped and chained object.
+	_.prototype.value = function () {
+		return this._wrapped;
 	}
+
+	_.prototype.valueOf = _.prototype.toJSON = _.prototype.value;
+
+	_.prototype.toString = function () {
+		return String(this._wrapped);
+	};
+
+
+	if (typeof define == 'function' && define.amd) {
+		define('underscore', [], function(){
+			return _;
+		});
+	}
+
 });

@@ -1475,6 +1475,7 @@
         };
         // Regexes for identifying a key that needs to be escaped.
         var source = '(?:' + _.keys(map).join('|') + ')';
+        console.log(source);
         var testRegexp = RegExp(source);
         var replaceRegexp = RegExp(source, 'g');
         return function(string) {
