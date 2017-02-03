@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FlowViewLayout Version="1.2">
+  <StrutsActivity path="/domain.do" location="950,50" dimension="166,84" />
+  <StrutsActivity path="/prefix.do" location="350,150" dimension="328,84" />
+  <StrutsActivity path="/author.do" location="950,250" dimension="328,84" />
+  <StrutsActivity path="/pages/domainList.jsp" location="50,150" dimension="166,48" />
+  <StrutsActivity path="/pages/prefixList.jsp" location="50,250" dimension="166,48" />
+  <StrutsActivity path="/author/opList.jsp" location="650,450" dimension="148,48" />
+  <StrutsActivity path="/author/roleList.jsp" location="350,450" dimension="160,48" />
+  <StrutsActivity path="/author/userList.jsp" location="650,350" dimension="160,48" />
+  <StrutsActivity path="/author/roleopList.jsp" location="50,450" dimension="172,48" />
+  <StrutsActivity path="/author/objectList.jsp" location="350,350" dimension="172,48" />
+  <StrutsActivity path="/author/usrobjroleList.jsp" location="50,350" dimension="196,48" />
+  <StrutsActivity path="/pagesExt/bookTypeList.jsp" location="350,50" dimension="196,48" />
+  <StrutsActivity path="/pagesExt/bookList.jsp" location="650,50" dimension="172,48" />
+  <StrutsActivity path="/protect.do" location="950,450" dimension="328,84" />
+  <StrutsActivity path="/pages/protectList.jsp" location="50,550" dimension="172,48" />
+  <StrutsTransition id="/author.do,roleopList,/author/roleopList.jsp,1" routingType="0">
+    <AutomaticBendpoints>
+      <AbsolutePoint location="950,283" />
+      <AbsolutePoint location="291,283" />
+      <AbsolutePoint location="291,474" />
+      <AbsolutePoint location="222,474" />
+    </AutomaticBendpoints>
+  </StrutsTransition>
+  <StrutsTransition id="/protect.do,prefixList,/pages/prefixList.jsp,1" routingType="0">
+    <AutomaticBendpoints>
+      <AbsolutePoint location="950,483" />
+      <AbsolutePoint location="897,483" />
+      <AbsolutePoint location="897,253" />
+      <AbsolutePoint location="216,253" />
+    </AutomaticBendpoints>
+  </StrutsTransition>
+  <StrutsTransition id="/author.do,objectList,/author/objectList.jsp,1" routingType="0">
+    <AutomaticBendpoints>
+      <AbsolutePoint location="1114,292" />
+      <AbsolutePoint location="0,0" />
+    </AutomaticBendpoints>
+  </StrutsTransition>
+  <StrutsTransition id="/protect.do,prefixList,/pages/protectList.jsp,1" routingType="0">
+    <AutomaticBendpoints>
+      <AbsolutePoint location="1114,534" />
+      <AbsolutePoint location="1114,574" />
+      <AbsolutePoint location="222,574" />
+    </AutomaticBendpoints>
+  </StrutsTransition>
+  <StrutsTransition id="/protect.do,protectList,/pages/protectList.jsp,1" routingType="0">
+    <AutomaticBendpoints>
+      <AbsolutePoint location="1114,492" />
+      <AbsolutePoint location="136,574" />
+    </AutomaticBendpoints>
+  </StrutsTransition>
+  <StrutsTransition id="/author.do,usrobjroleList,/author/usrobjroleList.jsp,1" routingType="0">
+    <AutomaticBendpoints>
+      <AbsolutePoint location="1114,292" />
+      <AbsolutePoint location="148,374" />
+    </AutomaticBendpoints>
+  </StrutsTransition>
+  <StrutsTransition id="/author.do,userList,/author/userList.jsp,1" routingType="0">
+    <AutomaticBendpoints>
+      <AbsolutePoint location="1084,334" />
+      <AbsolutePoint location="1084,374" />
+      <AbsolutePoint location="810,374" />
+    </AutomaticBendpoints>
+  </StrutsTransition>
+  <StrutsTransition id="/author.do,opList,/author/opList.jsp,1" routingType="0">
+    <AutomaticBendpoints>
+      <AbsolutePoint location="1114,334" />
+      <AbsolutePoint location="1114,413" />
+      <AbsolutePoint location="724,413" />
+      <AbsolutePoint location="724,450" />
+    </AutomaticBendpoints>
+  </StrutsTransition>
+  <StrutsTransition id="/domain.do,domainList,/pages/domainList.jsp,1" routingType="0">
+    <AutomaticBendpoints>
+      <AbsolutePoint location="1033,92" />
+      <AbsolutePoint location="0,0" />
+    </AutomaticBendpoints>
+  </StrutsTransition>
+  <StrutsTransition id="/author.do,roleList,/author/roleList.jsp,1" routingType="0">
+    <AutomaticBendpoints>
+      <AbsolutePoint location="950,313" />
+      <AbsolutePoint location="597,313" />
+      <AbsolutePoint location="597,474" />
+      <AbsolutePoint location="510,474" />
+    </AutomaticBendpoints>
+  </StrutsTransition>
+  <StrutsTransition id="/prefix.do,prefixList,/pages/prefixList.jsp,1" routingType="0">
+    <AutomaticBendpoints>
+      <AbsolutePoint location="514,192" />
+      <AbsolutePoint location="133,274" />
+    </AutomaticBendpoints>
+  </StrutsTransition>
+</FlowViewLayout>
+

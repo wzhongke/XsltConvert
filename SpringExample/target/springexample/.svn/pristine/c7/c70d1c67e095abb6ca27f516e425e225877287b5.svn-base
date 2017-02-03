@@ -1,0 +1,336 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+<TITLE>UBS操作权限申请单</TITLE>
+<meta http-equiv="Content-Type" content="text/html; charset=GBK">
+<STYLE type=text/css>
+* {
+	FONT-SIZE: 14px;
+	FONT-FAMILY: "Palatino Linotype", "Tahoma", "Verdana", "Helvetica", "宋体"
+}
+
+
+.HideSpan {display:none}
+@media Screen {
+	BODY {
+		BACKGROUND-IMAGE: url(background.gif)
+	}
+	#print {
+		FONT-WEIGHT: bold;
+		CURSOR: pointer;
+		COLOR: red
+	}
+	.input_t {
+		BORDER-RIGHT: 0px;
+		BORDER-TOP: 0px;
+		BORDER-LEFT: 0px;
+		BORDER-BOTTOM: 1px solid;
+		BACKGROUND-COLOR: transparent
+	}
+	.blkc {
+		
+	}
+	.mainframe {
+		
+	}
+}
+
+</STYLE>
+<SCRIPT type=text/javascript>
+function $1(E) {
+	return document.getElementById(E);
+}
+function trimnum(n) {
+	n = (n<10)?("0"+n):n;
+	return n;
+}
+
+function gettoday() {
+	var d=new Date();
+	with(d)
+		r=getFullYear()+"-"+trimnum(getMonth()+1)+"-"+trimnum(getDate());
+	return r;
+}
+var ids = new Array("name","dep","date","phone","uid","leader");
+var msg = new Array("姓名","部门","日期","分机号","要分配权限的SOGOU-INC.COM或SOHU-INC.COM帐户名","直线leader的RD邮箱");
+function refreshpage() {
+	$("main").className = "mainframe";
+	for(j=1;j<=8;j++) {
+		$("blkc"+j).className = ($("c["+j+"]").checked)?"":"blkc";
+
+		if(!$("c["+j+"]").checked) {
+			for(i=0;i<2;i++) {
+				$("c["+j+"]["+i+"]").checked = false;
+				$("c["+j+"]["+i+"]").disabled = true;
+			}
+		} else {
+			for(i=0;i<2;i++) {
+				$("c["+j+"]["+i+"]").disabled = false;
+			}
+		}
+	}
+	
+	
+}
+
+//三级联动
+function Dsy()
+  {
+  this.Items = {};
+  }
+  Dsy.prototype.add = function(id,iArray)
+  {
+  this.Items[id] = iArray;
+  }
+  Dsy.prototype.Exists = function(id)
+  {
+  if(typeof(this.Items[id]) == "undefined") return false;
+  return true;
+  }
+  
+  function change(v){
+  var str="0";
+  for(i=0;i<v;i++){ str+=("_"+(document.getElementById(s[i]).selectedIndex-1));};
+  var ss=document.getElementById(s[v]);
+  with(ss){
+   length = 0;
+   options[0]=new Option(opt0[v],opt0[v]);
+   if(v && document.getElementById(s[v-1]).selectedIndex>0 || !v)
+   {
+   if(dsy.Exists(str)){
+   ar = dsy.Items[str];
+   for(i=0;i<ar.length;i++)options[length]=new Option(ar[i],ar[i]);
+   if(v)options[0].selected = true;
+   }
+   }
+   if(++v<s.length){change(v);}
+  }
+  }
+  
+  var dsy = new Dsy();
+  
+  dsy.add("0",["网页","图片","视频","音乐","新闻","博客","微博"]);
+  
+  dsy.add("0_0",["SPIDER黑名单","前台黑名单","Query黑名单","网页hint","网页VR","人工干预系统","其它"]);
+  dsy.add("0_0_0",["域名表","前缀表","保护白名单"]);
+  dsy.add("0_0_1",["限制词维护","限制词分类维护"]);
+  dsy.add("0_0_2",["网页query维护","网页快照维护"]);
+  dsy.add("0_0_3",["网页hint黑名单","网页hint白名单","网页hint彩蛋"]);
+  dsy.add("0_0_4",["VR黑名单","VR白名单","VRINFO","VRSEED","外部VR数据审核","VR数据格式验证"]);
+  dsy.add("0_0_5",["网页人工干预"]);
+  dsy.add("0_0_6",["网页rerank白名单","网页qc不纠错","网页qc纠错为","网页suggestion黑名单"]);
+  
+  dsy.add("0_1",["resin前台黑名单","Tiny服务干预","人工干预","其它"]);
+  dsy.add("0_1_0",["图片query黑名单","前台查询词黑名单","前台hint、hobby黑名单","前台detail页屏蔽黑名单","前台白名单"]);
+  dsy.add("0_1_1",["图片hint黑名单","图片hint白名单","图片hobby黑名单","图片hint彩蛋","图片hobby彩蛋","图片qc就错为","图片qc不纠错"]);
+  dsy.add("0_1_2",["预览模式","列表模式"]);
+  dsy.add("0_1_3",["站点色情级别","抓取大站列表"]);
+
+  dsy.add("0_2",["resin前台黑名单","Tiny服务干预","人工干预","其它"]);
+  dsy.add("0_2_0",["图片query黑名单","前台查询词黑名单","前台hint、hobby黑名单","前台detail页屏蔽黑名单","前台白名单"]);
+  dsy.add("0_2_1",["图片hint黑名单","图片hint白名单","图片hobby黑名单","图片hint彩蛋","图片hobby彩蛋","图片qc就错为","图片qc不纠错"]);
+  dsy.add("0_2_2",["预览模式","列表模式"]);
+  dsy.add("0_2_3",["站点色情级别","抓取大站列表"]);
+
+  dsy.add("0_2",["resin前台黑名单","Tiny服务干预","人工干预","其它"]);
+  dsy.add("0_2_0",["视频query黑名单","前台查询词黑名单","前台hint、hobby黑名单"]);
+  dsy.add("0_2_1",["视频hint黑名单","视频hint白名单","视频hobby黑名单","视频hint彩蛋","视频hobby彩蛋","视频qc就错为","视频qc不纠错"]);
+  dsy.add("0_2_2",["预览模式","列表模式"]);
+  dsy.add("0_2_3",["视频XML路种子","抓取大站列表","视频localquery SiteRank","视频人工配hub种子","优质站点路种子"]);
+  
+  dsy.add("0_3",["其它"]);
+  dsy.add("0_3_0",["音乐index黑名单"]);
+  
+  dsy.add("0_4",["其它"]);
+  dsy.add("0_4_0",["新闻抓取seed","新闻数据制作黑名单","新闻query黑名单"]);
+
+  dsy.add("0_5",["其它"]);
+  dsy.add("0_5_0",["博客抓取seed","博客活跃站点"]);
+
+  dsy.add("0_6",["其它"]);
+  dsy.add("0_6_0",["微博url黑名单","微博博主黑名单"]);
+    
+  var s=["product","module","item"];
+  var opt0 = ["产品","模块","项目"];
+  function setup()
+  {
+  for(i=0;i<s.length-1;i++)
+   document.getElementById(s[i]).onchange=new Function("change("+(i+1)+")");
+  change(0);
+  }
+
+ 
+  var liNo = 0;
+  function removePri(liId){
+  	var priUl = document.getElementById("priUl");
+  	var li =  document.getElementById(liId);
+  	priUl.removeChild(li);
+  		
+  }
+
+ 
+  function addPri(){
+  	var pro = document.getElementById("product").value;
+  	var module = document.getElementById("module").value;
+  	var item = document.getElementById("item").value;
+  	var role = document.getElementById("role").value;
+  	
+  	var priUl = document.getElementById("priUl");//.innerHTML = pro+"-"+module+"-"+item+"("+role+")";
+    var li=document.createElement("LI");
+    li.id = "pri_"+(liNo++);
+    //li.name = "priLi";
+    li.setAttribute("name","priLi");
+  	li.innerHTML = pro+"-"+module+"-"+item+"("+role+")&nbsp;&nbsp;<a title=删除 href=\"javascript:void(0)\"  onclick=\"removePri('"+li.id+"')\">x</a>";
+  	priUl.appendChild(li);
+  }
+
+</SCRIPT>
+<script language="JavaScript" src="js/jquery.js?v=20100412"></script>
+<META content="MSHTML 6.00.6000.16850" name=GENERATOR>
+</HEAD>
+<BODY onload=refreshpage()>
+<TABLE align=center>
+	<TBODY>
+		<TR>
+			<TD align=middle><B>用户权限申请（变更、注销）表</B></TD>
+		</TR>
+		<TR>
+			<TD align=right>——UMIS操作权限</TD>
+		</TR>
+	</TBODY>
+</TABLE>
+<BR>
+<BR>
+<TABLE width=600 align=center>
+	<TBODY>
+		<TR>
+			<TD>编号：<U>NO-UMIS-2010</U></TD>
+			<TD align=right>&nbsp;<A id=print onclick="javascript:printme()"><span>邮件发送</SPAN></A></TD>
+		</TR>
+	</TBODY>
+</TABLE>
+<SPAN id=main>
+<form action="apply.do?method=send" method="POST" name="applyForm" id="applyForm"> 
+<TABLE class=maintable width=600 align=center border=2 style="	FONT-SIZE: 14px;FONT-FAMILY: 'Palatino Linotype', 'Tahoma', 'Verdana', 'Helvetica','宋体';BORDER-RIGHT: #000000 1px solid;	BORDER-TOP: #000000 1px solid;	BORDER-LEFT: #000000 1px solid;	BORDER-BOTTOM: #000000 1px solid;	BORDER-COLLAPSE: collapse">
+	<TBODY>
+		<TR style="HEIGHT: 40px">
+			<TD align=middle>申请人姓名</TD>
+			<TD>&nbsp;<INPUT class=input_t id=name size=10 name=name value=""><span id="sname" class="HideSpan"></span></TD>
+			<TD align=middle>申请人部门</TD>
+			<TD>&nbsp;<INPUT class=input_t id=dep size=12 name=dep value=""><span id="sdep"  class="HideSpan"></span></TD>
+			<TD align=middle>申请日期</TD>
+			<TD>&nbsp;<INPUT class=input_t id=date size=9 name=date value=""><span id="sdate"  class="HideSpan"></span></TD>
+		</TR>
+		<TR style="HEIGHT: 40px">
+			<TD align=middle>申请人分机</TD>
+			<TD>&nbsp;<INPUT class=input_t id=phone size=10 name=phone value=""><span id="sphone"  class="HideSpan"></span></TD>
+			<TD align=middle>Leader RD邮箱</TD>
+			<TD colSpan=3>&nbsp;<INPUT class=input_t id=leader size=30 name=leader value=""><span id="sleader"  class="HideSpan"></span></TD>
+		</TR>
+		<TR style="HEIGHT: 40px">
+			<TD align=middle>操作类型</TD>
+			<TD colSpan=5>
+				<INPUT type=radio CHECKED name=type value="申请用户">申请用户 
+				<INPUT type=radio name=type value="用户权限变更">用户权限变更 
+				<INPUT type=radio name=type value="注销用户">注销用户
+			</TD>
+		</TR>
+		<TR style="HEIGHT: 40px">
+			<TD align=middle>系统名称</TD>
+			<TD colSpan=5>统一干预信息管理系统UMIS</TD>
+		</TR>
+		<TR style="HEIGHT: 60px">
+			<TD align=middle>分配(变更,<BR>
+			注销)的<BR>
+			用户ID</TD>
+			<TD vAlign=top colSpan=5>(使用sogou-inc.com或sohu-inc.com域帐户名(<FONT color=red>必须</FONT>)):<BR>
+			<BR>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <INPUT class=input_t id=uid size=30 name=uid  value=""><span id="suid"  class="HideSpan"></span></TD>
+		</TR>
+		
+		<TR style="HEIGHT: 300px">
+			<TD align=middle>权限项目</TD>
+			<TD vAlign=top colSpan=5>
+			
+			<div id=priSel>
+			<select id="product" NAME="product" style="width:60"></select>
+	        <select id="module" NAME="module"></select>
+		    <select id="item" NAME="item"></select>
+		
+		    <SCRIPT language="javascript">    
+		    //初始化省市三级菜单    
+		     setup()      
+		    </SCRIPT>   
+ 
+			<select id="role" NAME="role">
+				<option value="普通管理员" selected=true>普通管理员</option>
+				<option value="超级管理员">超级管理员</option>
+			</select>
+			<input type="button" name="addBtn" value="添加" onclick="addPri();">
+			<BR>
+			</div>
+			<ul id="priUl">
+			</ul>
+			
+			</TD>	
+		</TR>
+		<TR style="HEIGHT: 40px">
+			<TD align=middle>权限<BR>含义<BR>说明</TD>
+			<TD colSpan=5>1.【超级管理员】单独增删改查、批量增删改、上线<br>
+			2.【普通管理员】单独增删改查、上线
+			</TD>
+		</TR>
+	</TBODY>
+</TABLE>
+</form>
+</SPAN>
+</BODY>
+<SCRIPT type=text/javascript>
+$1("date").value = gettoday();
+function printme() {
+
+	for(i=0;i<ids.length;i++) {
+		if($1(ids[i]).value=="") {
+			alert("请输入"+msg[i]+"!");
+			$1(ids[i]).focus();
+			return false;
+		}else
+			$1("s"+ids[i]).innerHTML = $1(ids[i]).value;
+	}
+	
+	var priLis=$("li[name='priLi']");
+	if(priLis.length == 0)
+		alert("请选择/输入权限说明！");
+	else{
+		for(var i = 0;i < priLis.length;i++){
+			if(priLis[i].innerHTML.indexOf("产品")!=-1||priLis[i].innerHTML.indexOf("模块")!=-1){
+			   alert("请选择有效的权限！");
+			   return;
+			}
+		}
+	
+	}
+
+	if($1("product").value=="产品" || $1("module").value =="模块")
+		alert("请选择/输入权限说明！");
+
+ 	var html = encodeURIComponent(document.body.innerHTML);
+ 	//html  = encodeURIComponent(html);
+    var url = "apply.do?method=send";
+    $.ajax({type:'post',async:true,'url':url,data:{'html':html,'leader':$1("leader").value,'uid':$1("uid").value}, success:function(data){
+        if(data != 'ok') {
+            //$1("#popMsg").html("<div style='color:red;margin:10px;font-weight:bold;'>删除失败!</div>"+
+            //"<div style='font-size:0.9em;margin:10px;'>"+data+"</div>");
+        	alert("发送失败！");
+        } else {
+        
+        	alert("发送成功！");
+            //$1("#popMsg").html("<div style='margin:10px;'>资源删除成功!</div>");
+            //function timeout(){window.location.reload();}
+            //setTimeout(timeout, 2000);
+        }
+    }});
+}
+</SCRIPT>
+</HTML>
+<!--zly-->

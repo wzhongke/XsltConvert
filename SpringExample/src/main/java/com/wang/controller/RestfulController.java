@@ -72,10 +72,10 @@ public class RestfulController {
         chatRoomService.sendMessage("message");
     }
 
-    @RequestMapping("/download")
-    public StreamingResponseBody handleDownload() {
-        return (OutputStream outputStream) -> {
-            // write the file and something to download
-        };
-    }
+//    @RequestMapping("/download")
+//    public StreamingResponseBody handleDownload() {
+//        return (OutputStream outputStream) -> {
+//            // write the file and something to download
+//        };
+//    }
 }

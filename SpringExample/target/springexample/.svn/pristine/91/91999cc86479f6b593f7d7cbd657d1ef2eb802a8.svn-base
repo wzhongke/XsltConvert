@@ -1,0 +1,43 @@
+<?php
+	$dbInfo = array();
+	$dbInfo['host'] = "mysql01.ctc";
+	$dbInfo['dbName'] = "ubs_spider_black";
+	$dbInfo['username'] = "dailytest";
+	$dbInfo['passwd'] = "dailytest";
+	if(isset($_GET['table'])){
+	    $table = $_GET['table'];
+	}else{
+	    $table = "query_webpage_blacklist";
+	}
+    if(!in_array($table, array("query_webpage_blacklist","front_webpage_blacklist"))){
+    	exit(0);
+    }
+
+    $dsn = "mysql:host=".$dbInfo['host'].";dbname=".$dbInfo['dbName'];
+    $pdo = new PDO($dsn,$dbInfo['username'],$dbInfo['passwd']);
+
+    if($table=="query_webpage_blacklist"){
+    	$sql = "select url from ".$table." where url_type=2";
+    }else if($table == "front_webpage_blacklist"){
+    	$sql = "select keyword ,start_time from ".$table." where type<>7 and groupname<>76 and status<>0 and end_time>now()";
+    }
+
+    $pdo->query("set names gbk");
+    $stmt = $pdo->query($sql);
+    //$fopen = fopen($table.".txt","w");
+    if($table=='query_webpage_blacklist'){
+       	while($row = $stmt->fetch()){
+       		echo $row['url']."\n";
+            //fwrite($fopen,$row['url']."\n");
+    	} 	
+    }else{
+    	while($row = $stmt->fetch()){
+            echo $row['keyword']."\t".$row['start_time']."\n";
+    		//fwrite($fopen,$row['keyword']."\t".$row['start_time']."\n");
+    	}
+    }
+
+    //fclose($fopen);
+
+	        
+?>

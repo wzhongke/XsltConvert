@@ -14,7 +14,7 @@ import javax.servlet.ServletRegistration;
  * 在Servlet3.0+ 中使用该方式可以作为web.xml的替代或者结合来配置项目
  * 基于java配置时， 继承 AbstractAnnotationConfigDispatcherServletInitializer
  */
-public class MyWebAppInitializer extends AbstractDispatcherServletInitializer{
+public class MyWebAppInitializer extends AbstractDispatcherServletInitializer {
 
 
     @Override
@@ -31,7 +31,7 @@ public class MyWebAppInitializer extends AbstractDispatcherServletInitializer{
     // 添加filter
     @Override
     protected Filter[] getServletFilters() {
-        return new Filter[] { new ShallowEtagHeaderFilter() };
+        return new Filter[]{new ShallowEtagHeaderFilter()};
     }
 
     @Override
@@ -41,7 +41,7 @@ public class MyWebAppInitializer extends AbstractDispatcherServletInitializer{
 
     @Override
     protected String[] getServletMappings() {
-        return new String[] {"/"};
+        return new String[]{"/"};
     }
 
     @Override

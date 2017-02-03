@@ -1,0 +1,24 @@
+jdbc.driverClassName=com.mysql.jdbc.Driver
+jdbc.url=jdbc:mysql://10.134.85.164:3306/test
+jdbc.username=wang
+jdbc.password=wang1201
+
+#dbcp.propertiesµƒ≈‰÷√
+
+dbcp.jdbc.driverClassName=com.mysql.jdbc.Driver
+dbcp.jdbc.url=jdbc:mysql://10.134.85.164:3306/test
+dbcp.jdbc.username=wang
+dbcp.jdbc.password=wang1201
+
+dbcp.jdbc.initPoolSize=5
+dbcp.jdbc.maxPoolSize=10
+
+#c3p0.properties µƒ≈‰÷√
+
+c3p0.jdbc.driverClassName=com.mysql.jdbc.Driver
+c3p0.jdbc.url=jdbc:mysql://10.134.85.164:3306/test
+c3p0.jdbc.username=wang
+c3p0.jdbc.password=wang1201
+
+c3p0.jdbc.initialSize=5
+c3p0.jdbc.maxActive=10

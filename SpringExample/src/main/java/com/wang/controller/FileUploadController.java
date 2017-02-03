@@ -31,13 +31,13 @@ public class FileUploadController {
     @GetMapping
     public String listUploadedFiles(Model model) throws IOException {
 
-        model.addAttribute("files", storageService
-                .loadAll()
-                .map(path ->
-                        MvcUriComponentsBuilder
-                                .fromMethodName(FileUploadController.class, "serveFile", path.getFileName().toString())
-                                .build().toString())
-                .collect(Collectors.toList()));
+//        model.addAttribute("files", storageService
+//                .loadAll()
+//                .map(path ->
+//                        MvcUriComponentsBuilder
+//                                .fromMethodName(FileUploadController.class, "serveFile", path.getFileName().toString())
+//                                .build().toString())
+//                .collect(Collectors.toList()));
 
         return "uploadForm";
     }
@@ -60,7 +60,7 @@ public class FileUploadController {
     /* redirect: 浏览器的url也会改变 */
     @RequestMapping(value = "uploadFiles",method = RequestMethod.POST)
     public String handleFileUpload(@RequestParam("files")MultipartFile[] files, RedirectAttributes redirect) {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         for(MultipartFile file : files) {
             storageService.store(file);
             buffer.append(file.getOriginalFilename());
@@ -72,15 +72,15 @@ public class FileUploadController {
     }
 
     /* redirect: 浏览器的url也会改变 */
-    @RequestMapping(value = "uploadFilesAsy",method = RequestMethod.POST)
-    public Callable<String> handleFileUploadAsy(@RequestParam("files") final MultipartFile[] files) {
-       return () -> {
-           for (MultipartFile file : files) {
-               storageService.store(file);
-           }
-           return "redirect:files";
-       };
-    }
+//    @RequestMapping(value = "uploadFilesAsy",method = RequestMethod.POST)
+//    public Callable<String> handleFileUploadAsy(@RequestParam("files") final MultipartFile[] files) {
+//       return () -> {
+//           for (MultipartFile file : files) {
+//               storageService.store(file);
+//           }
+//           return "redirect:files";
+//       };
+//    }
 
     @PostMapping("uploadImage")
     @ResponseBody

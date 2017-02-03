@@ -1,0 +1,252 @@
+<%@ page language="java" contentType="text/html; charset=GBK"  pageEncoding="GBK"%>
+<%@ page import="
+java.util.HashMap,
+java.util.ArrayList,
+java.util.Iterator,
+com.sohu.frontweb.apollo.service.ApolloService,
+com.sohu.frontweb.apollo.data.DataInfo,
+com.sohu.frontweb.ParameterWrapper,
+java.net.URLDecoder,
+java.net.URLEncoder
+"
+%> 
+<% 
+	ParameterWrapper pw = new ParameterWrapper();
+	pw.init(request);
+		
+	String url = pw.getStringParameter("url","http://www.sogou.com/*");
+	String date = pw.getStringParameter("date","20101027");
+	String type = pw.getStringParameter("type","url");
+	
+	String tUrl = url;
+	if(type.equals("prefix")){
+		if(tUrl.indexOf("*")==-1){
+			if(url.indexOf("http://")==-1)
+				url = "http://"+url;
+			if(!tUrl.endsWith("/*"))
+				if(!tUrl.endsWith("/"))
+					url += "/*";
+				else
+					url += "*";
+		}		
+			
+	}
+	
+	ArrayList<DataInfo> dataList = ApolloService.getUrlTrend(url,null,date);
+	DataInfo di = ApolloService.getUrlInfo(url, date);
+	
+	ArrayList<DataInfo> pieList = ApolloService.getPvDistribution(di.getMd5(), date);
+	
+	StringBuffer pvTrend = new StringBuffer();
+	StringBuffer uvTrend = new StringBuffer();
+	StringBuffer absPvTrend = new StringBuffer();
+	StringBuffer absUvTrend = new StringBuffer();
+	
+	StringBuffer ctrTrend = new StringBuffer();
+	StringBuffer pieDis = new StringBuffer();
+	StringBuffer barDis = new StringBuffer();
+	
+	//StringBuffer pvTrend = new StringBuffer();
+	//StringBuffer pvTrend = new StringBuffer();
+		
+	for(int i = dataList.size()-1;i>=0;i--){
+			DataInfo dataInfo = dataList.get(i);
+			pvTrend.append("<set label='"+dataInfo.getDate()+"' value='"+dataInfo.getTotalPv()+"' />");	
+			uvTrend.append("<set label='"+dataInfo.getDate()+"' value='"+dataInfo.getTotalUv()+"' />");
+	
+			absPvTrend.append("<set label='"+dataInfo.getDate()+"' value='"+dataInfo.getUrlPv()+"' />");	
+			absUvTrend.append("<set label='"+dataInfo.getDate()+"' value='"+dataInfo.getUrlUv()+"' />");
+			
+			ctrTrend.append("<set label='"+dataInfo.getDate()+"' value='"+dataInfo.getCtr()+"' />");
+			
+	}
+	
+	for(DataInfo data : pieList){
+		pieDis.append("<set label=\\\""+ data.getUrl() +"\\\" toolText=\\\""+ data.getUrl()+":"+ data.getUrlPv() +"\\\" value=\\\""+data.getUrlPv()+"\\\" isSliced=\\\"0\\\" link=\\\"JavaScript:searchInfo('"+ URLEncoder.encode(data.getUrl()) +"','"+ data.getDate()  +"');\\\"/>\\\n");
+		barDis.append("<set label=\\\""+ data.getUrl() +"\\\" toolText=\\\""+ data.getUrl()+":"+ data.getUrlPv() +"\\\" value=\\\""+data.getUrlPv()+"\\\"  link=\\\"JavaScript:searchInfo('"+ URLEncoder.encode(data.getUrl()) +"','"+ data.getDate() +"');\\\"/>\\\n");		
+		
+	}
+%>
+  
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=GBK"/>
+
+<style>
+
+#seachTable{font-size:16px;}
+#mainDiv ul{}
+#mainDiv ul li{float:left;margin:20px 20px 0px 0px;}
+.chartDiv{margin-top:20px;}
+</style>
+</head>   
+<body>
+ 
+<%if(di.getUrl()==null){
+	out.println("网页数据太少，无统计信息");
+}else{%> 
+ 
+<table border=0 width=100% align="center" style="font-size:14px;text-align:center;margin-top:20px;">
+
+<tr>
+		<td>
+			<table border=1 width=100% align="center" style="font-size:14px;text-align:center">
+				<tr>
+					<td colspan=2>基本信息</td>
+				</tr>			
+				<tr>
+					<td width="20%">网址</td><td><%=di.getUrl()%></td>
+				</tr>	
+				<tr>	
+					<td width="20%">日期</td><td><%=di.getDate()%></td>
+				</tr>	
+				<tr>
+					<td width="20%">PV总和(每亿PV)</td><td><%=di.getTotalPv()%></td>
+				</tr>	
+				<tr>
+				<td width="20%">UV总和(每亿PV)</td><td><%=di.getTotalUv()%></td>
+			</tr>	
+			<tr>
+				<td width="20%">绝对PV总和</td><td><%=di.getUrlPv()%></td>
+			</tr>	
+			<tr>
+				<td width="20%">绝对UV总和</td><td><%=di.getUrlUv()%></td>
+			</tr>	
+			<tr>
+				<td width="20%">平均CTR</td><td><%=di.getCtr()%></td>
+			</tr>	
+			<tr>
+				<td width="20%">平均PV/UV</td><td><%=(di.getUrlUv()!=0)?di.getUrlPv()/di.getUrlUv():""%></td>		
+			</tr>
+		</table>			
+		</td>
+        <td>
+                <div id="pvTrend_chartdiv"> </div>
+        </td>
+      
+</tr>
+<tr>
+        <td>
+                <div id="pvDistribution_chartdiv"> </div>
+        </td>
+        <td>
+            	<div id="pvDistributionBar_chartdiv"> </div>
+        </td>
+</tr>
+<tr>
+        <td>
+                <div id="uvTrend_chartdiv"> </div>
+        </td>
+        <td>
+                <div id="ctrTrend_chartdiv"> </div>
+        </td>
+</tr>
+<tr>
+        <td>
+                <div id="absPvTrend_chartdiv"> </div>
+        </td>
+        <td>
+                <div id="absUvTrend_chartdiv"> </div>
+        </td>
+</tr>
+
+</table>
+
+
+<script type="text/javascript">
+
+function searchInfo(url,date){
+
+	var searchUrl = 'apollo/basic.jsp?r='+Math.random()
+					+"&url="+escape(url)+"&date="+date;
+	
+	p.load({
+					url: searchUrl,
+					callback : function(){
+					},
+					scripts: true
+	});
+}
+
+var pvTrendXml = "<chart caption='PV趋势 （每亿PV）' subCaption='' formatNumberScale='0' setAdaptiveYMin='1'  showValues='0' bgColor='406181, 6DA5DB'  bgAlpha='100' baseFontColor='FFFFFF' canvasBgAlpha='0' canvasBorderColor='FFFFFF' divLineColor='FFFFFF' divLineAlpha='100' numVDivlines='<%=dataList.size()-2%>' vDivLineisDashed='1' showAlternateVGridColor='1' lineColor='BBDA00' anchorRadius='4' anchorBgColor='BBDA00' anchorBorderColor='FFFFFF' anchorBorderThickness='2'  toolTipBgColor='406181' toolTipBorderColor='406181' alternateHGridAlpha='5'>\n"+
+				 "<%=pvTrend.toString()%>"+
+				 "<styles><definition><style name='LineShadow' type='shadow' color='333333' distance='6'/></definition>"+
+				 "<application><apply toObject='DATAPLOT' styles='LineShadow' /></application>	"+
+				 "</styles></chart>";
+
+var uvTrendXml = "<chart caption='UV趋势 （每亿PV）' subCaption='' formatNumberScale='0' setAdaptiveYMin='1'  showValues='0' bgColor='406181, 6DA5DB'  bgAlpha='100' baseFontColor='FFFFFF' canvasBgAlpha='0' canvasBorderColor='FFFFFF' divLineColor='FFFFFF' divLineAlpha='100' numVDivlines='<%=dataList.size()-2%>' vDivLineisDashed='1' showAlternateVGridColor='1' lineColor='BBDA00' anchorRadius='4' anchorBgColor='BBDA00' anchorBorderColor='FFFFFF' anchorBorderThickness='2'  toolTipBgColor='406181' toolTipBorderColor='406181' alternateHGridAlpha='5'>\n"+
+				 "<%=uvTrend.toString()%>"+
+				 "<styles><definition><style name='LineShadow' type='shadow' color='333333' distance='6'/></definition>"+
+				 "<application><apply toObject='DATAPLOT' styles='LineShadow' /></application>	"+
+				 "</styles></chart>";
+				 
+var absPvTrendXml = "<chart caption='绝对PV趋势' subCaption='' formatNumberScale='0' setAdaptiveYMin='1'  showValues='0' bgColor='406181, 6DA5DB'  bgAlpha='100' baseFontColor='FFFFFF' canvasBgAlpha='0' canvasBorderColor='FFFFFF' divLineColor='FFFFFF' divLineAlpha='100' numVDivlines='<%=dataList.size()-2%>' vDivLineisDashed='1' showAlternateVGridColor='1' lineColor='BBDA00' anchorRadius='4' anchorBgColor='BBDA00' anchorBorderColor='FFFFFF' anchorBorderThickness='2'  toolTipBgColor='406181' toolTipBorderColor='406181' alternateHGridAlpha='5'>\n"+
+				 "<%=absPvTrend.toString()%>"+
+				 "<styles><definition><style name='LineShadow' type='shadow' color='333333' distance='6'/></definition>"+
+				 "<application><apply toObject='DATAPLOT' styles='LineShadow' /></application>	"+
+				 "</styles></chart>";
+			
+var absUvTrendXml = "<chart caption='绝对UV趋势' subCaption='' formatNumberScale='0' setAdaptiveYMin='1'  showValues='0' bgColor='406181, 6DA5DB'  bgAlpha='100' baseFontColor='FFFFFF' canvasBgAlpha='0' canvasBorderColor='FFFFFF' divLineColor='FFFFFF' divLineAlpha='100' numVDivlines='<%=dataList.size()-2%>' vDivLineisDashed='1' showAlternateVGridColor='1' lineColor='BBDA00' anchorRadius='4' anchorBgColor='BBDA00' anchorBorderColor='FFFFFF' anchorBorderThickness='2'  toolTipBgColor='406181' toolTipBorderColor='406181' alternateHGridAlpha='5'>\n"+
+				 "<%=absUvTrend.toString()%>"+
+				 "<styles><definition><style name='LineShadow' type='shadow' color='333333' distance='6'/></definition>"+
+				 "<application><apply toObject='DATAPLOT' styles='LineShadow' /></application>	"+
+				 "</styles></chart>";
+
+var ctrTrendXml = "<chart caption='CTR趋势' subCaption='' formatNumberScale='0' setAdaptiveYMin='1'  showValues='0' bgColor='406181, 6DA5DB'  bgAlpha='100' baseFontColor='FFFFFF' canvasBgAlpha='0' canvasBorderColor='FFFFFF' divLineColor='FFFFFF' divLineAlpha='100' numVDivlines='<%=dataList.size()-2%>' vDivLineisDashed='1' showAlternateVGridColor='1' lineColor='BBDA00' anchorRadius='4' anchorBgColor='BBDA00' anchorBorderColor='FFFFFF' anchorBorderThickness='2'  toolTipBgColor='406181' toolTipBorderColor='406181' alternateHGridAlpha='5'>\n"+
+				 "<%=ctrTrend.toString()%>"+
+				 "<styles><definition><style name='LineShadow' type='shadow' color='333333' distance='6'/></definition>"+
+				 "<application><apply toObject='DATAPLOT' styles='LineShadow' /></application>	"+
+				 "</styles></chart>";
+
+var pieDisXml = "<chart caption=\"PV 分布\" palette=\"2\"  animation=\"1\" subCaption=\"\" YAxisName=\"\" showValues=\"1\" formatNumberScale=\"0\" showPercentInToolTip=\"1\" showLabels=\"0\" showLegend=\"0\" showPercentValues=\"1\">" +
+				"<%=pieDis.toString()%>"+
+				 "<styles><definition><style type=\"font\" name=\"CaptionFont\" color=\"666666\" size=\"15\" /><style type=\"font\" name=\"SubCaptionFont\" bold=\"0\" /></definition>" +
+				 "<application><apply toObject=\"caption\" styles=\"CaptionFont\"/> <apply toObject=\"SubCaption\" styles=\"SubCaptionFont\" /></application>" +
+				 "</styles></chart>";
+
+var barDisXml = "<chart caption='PV 分布' yAxisName='' xAxisName='' bgColor='F1F1F1' showValues='1' canvasBorderThickness='1' formatNumberScale=\"0\" canvasBorderColor='999999'  plotFillAngle='330' plotBorderColor='999999' showAlternateVGridColor='1' divLineAlpha='0' setAdaptiveYMin='1' >"+
+				"<%=barDis.toString()%>"+
+				"</chart>";				 
+				 
+
+      
+		   var chart = new FusionCharts("flash/FUSIONCHARTS.COM/Line.swf", "ChartId", "570", "260", "0", "0");
+		   //chart.setXMLUrl("apollo/xml?chart=pvTrend");		   
+		   chart.setXMLData(pvTrendXml);
+		   chart.render("pvTrend_chartdiv");
+
+		   var chart = new FusionCharts("flash/FUSIONCHARTS.COM/Pie3D.swf", "ChartId1", "570", "260", "0", "0");
+		   chart.setXMLData(pieDisXml);
+		   chart.render("pvDistribution_chartdiv");
+		   
+		   
+		   var chart = new FusionCharts("flash/FUSIONCHARTS.COM/Bar2D.swf", "ChartId", "570", "260", "0", "0");
+		   chart.setXMLData(barDisXml);		   
+		   chart.render("pvDistributionBar_chartdiv");   
+		   
+		   var chart = new FusionCharts("flash/FUSIONCHARTS.COM/Line.swf", "ChartId", "570", "260", "0", "0");
+		   chart.setXMLData(uvTrendXml);	   
+		   chart.render("uvTrend_chartdiv");		
+		   
+		   var chart = new FusionCharts("flash/FUSIONCHARTS.COM/Line.swf", "ChartId", "570", "260", "0", "0");
+		  chart.setXMLData(ctrTrendXml);	   
+		   chart.render("ctrTrend_chartdiv");	   
+	
+		   var chart = new FusionCharts("flash/FUSIONCHARTS.COM/Line.swf", "ChartId", "570", "260", "0", "0");
+		   chart.setXMLData(absPvTrendXml);		   
+		   chart.render("absPvTrend_chartdiv");		
+
+		   var chart = new FusionCharts("flash/FUSIONCHARTS.COM/Line.swf", "ChartId", "570", "260", "0", "0");
+		   chart.setXMLData(absUvTrendXml);	   
+		   chart.render("absUvTrend_chartdiv");	
+  
+			document.getElementById("url0").value="<%=url%>";
+					   
+		</script>	
+		
+<%}%>		
+</body>
+
+</html>
+

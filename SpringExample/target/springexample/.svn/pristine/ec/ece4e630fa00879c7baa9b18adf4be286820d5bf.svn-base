@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd">
+
+    <!-- 自动扫描@Controller -->
+    <context:component-scan base-package="com.wang.controller" />
+
+    <!-- This allows customizing various settings related to URL mapping and path matching.
+         可以设置是否自动过滤后缀，比如 .do -->
+    <mvc:annotation-driven >
+        <mvc:path-matching
+                suffix-pattern="true"
+                trailing-slash="false"
+                registered-suffixes-only="true"
+                />
+    </mvc:annotation-driven>
+
+    <!-- 可以使用矩阵参数：/owners/42;q=11;r=12/pets/21;q=22;s=23
+         @GetMapping("/owners/{ownerId}/pets/{petId}")
+         @MatrixVariable(pathVar="petId"") MultiValueMap<String, String> petMatrixVars
+         -->
+    <mvc:annotation-driven enable-matrix-variables="true" />
+
+    <!-- 使用拦截器 -->
+    <bean id="handlerMapping" class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping">
+        <property name="interceptors">
+            <list><ref bean="officeHoursInterceptor" /> </list>
+        </property>
+    </bean>
+    <bean id="officeHoursInterceptor" class="com.wang.intercepting.TimeBasedAccessInterceptor">
+        <property name="openingTime" value="9" />
+        <property name="closingTime" value="18" />
+    </bean>
+
+    <!--UrlBasedViewResolver  view resolver: when return 'test' as a view name, this view resolver will send the request to
+        /WEB-INF/jsp/test.jsp
+        如果使用的是JSP作为view，可以使用 UrlBasedViewResolver-->
+    <bean id="viewResolver" class="org.springframework.web.servlet.view.UrlBasedViewResolver">
+        <property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
+        <property name="prefix" value="/WEB-INF/jsp/"/>
+        <property name="suffix" value=".jsp"/>
+    </bean>
+
+    <!-- view resolvers chain -->
+    <bean id="jspViewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
+        <property name="prefix" value="/WEB-INF/jsp/"/>
+        <property name="suffix" value=".jsp"/>
+    </bean>
+    <bean id="excelViewResolver" class="org.springframework.web.servlet.view.XmlViewResolver">
+        <!-- order 指明view resolver的优先级，值越小，优先级越高 -->
+        <property name="order" value="1"/>
+        <property name="location" value="views.xml"/>
+    </bean>
+
+    <!-- 当使用不同的view技术时，可以使用 ResourceBundleViewResolver, 还不晓得basename和defaultParentView的值是什么关系-->
+    <bean id="resourceViewResolver" class="org.springframework.web.servlet.view.ResourceBundleViewResolver">
+        <property name="basename" value="views" />
+        <property name="defaultParentView" value="parentView"/>
+    </bean>
+
+    <!-- 多文件上传 MultipartResolver -->
+    <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <property name="maxUploadSizePerFile" value="10000"/>
+    </bean>
+
+    <!-- HTTP 缓存对于静态资源的支持 -->
+    <mvc:resources mapping="/static/**" location="/static/">
+        <mvc:cache-control max-age="3600" cache-public="true" />
+    </mvc:resources>
+    <!-- HTTP 缓存对于静态资源的支持的java版本 -->
+    <bean class="com.wang.configuration.WebConfig" />
+
+    <!-- 配置xml转换器 -->
+    <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter">
+        <property name="messageConverters">
+            <list>
+                <ref bean="stringHttpMessageConvert" />
+                <ref bean="marshallingHttpMessageConvert" />
+
+            </list>
+        </property>
+    </bean>
+    <bean id="stringHttpMessageConvert" class="org.springframework.http.converter.StringHttpMessageConverter" />
+    <bean id="marshallingHttpMessageConvert" class="org.springframework.http.converter.xml.MarshallingHttpMessageConverter">
+        <property name="marshaller" ref="castorMarshaller"/>
+        <property name="unmarshaller" ref="castorMarshaller" />
+    </bean>
+    <bean id="castorMarshaller" class="org.springframework.oxm.castor.CastorMarshaller"/>
+
+
+    <!-- 根据请求的后缀或者Accept header的内容匹配view resolver -->
+    <bean class="org.springframework.web.servlet.view.ContentNegotiatingViewResolver">
+        <property name="viewResolvers">
+            <list>
+                <!-- .atom -->
+                <bean class="org.springframework.web.servlet.view.BeanNameViewResolver" />
+                <!-- .html -->
+                <bean id="jspViewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+                    <property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
+                    <property name="prefix" value="/WEB-INF/jsp/"/>
+                    <property name="suffix" value=".jsp"/>
+                </bean>
+            </list>
+        </property>
+        <property name="defaultViews">
+            <!-- json -->
+            <list><bean class="org.springframework.web.servlet.view.json.MappingJackson2JsonView" /> </list>
+        </property>
+    </bean>
+
+    <!-- 将请求"/"映射到view -->
+    <mvc:view-controller path="/" view-name="/example" />
+
+
+</beans>

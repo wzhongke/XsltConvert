@@ -1,0 +1,759 @@
+<%@ page language="java" contentType="text/html; charset=GBK"
+    pageEncoding="GBK"%>
+<%@ page import="
+java.util.HashMap,
+java.util.ArrayList,
+java.util.Iterator,
+com.sohu.frontweb.base.data.Leaf,
+com.sohu.frontweb.ubs.data.BlackTable,
+com.sohu.frontweb.ubs.service.BlacklistService,
+com.sohu.frontweb.base.action.UmisAction"%>   
+
+<%!
+/*****************生成menuList********************/
+    private StringBuffer genMenuList(Leaf thisNode,boolean root){
+        if(!thisNode.hasChild())
+            return new StringBuffer();
+        
+        StringBuffer sb = new StringBuffer();
+        
+        if(root)
+            sb.append("<ul class='menu'>\n");
+        else
+            sb.append("<ul>\n");
+            
+        Iterator it = thisNode.getChildList().iterator();
+        while(it.hasNext()){
+            Leaf leaf = (Leaf)it.next();
+            sb.append("<li><a url='"+(leaf.getNodeValue()!=null?leaf.getNodeValue()+"'  onclick='loadMainContent(this)' ":"#'")+"  "+ (leaf.hasChild()?"class='parent'":"") +"  class='"+leaf.getNodeName()+"'  ><span>"+leaf.getNodeName()+"</span></a>");
+            sb.append(genMenuList(leaf,false));
+            sb.append("</li>");
+        }
+        sb.append("</ul>");
+        return  sb;
+    }
+
+    private void addToMenu(HashMap<String,HashMap<String,ArrayList<Leaf>>> menuMap,String product,String secCla,Leaf thisNode){
+     HashMap<String,ArrayList<Leaf>> addSecClaMap =  menuMap.get(product);
+        ArrayList<Leaf> addItemList = null;
+        if(addSecClaMap.containsKey(secCla))
+               addItemList = addSecClaMap.get(secCla);
+        else
+               addItemList = new ArrayList<Leaf>();
+
+        addItemList.add(thisNode);
+        addSecClaMap.put(secCla,addItemList);
+        menuMap.put(product,addSecClaMap);
+    }
+
+%> 
+ 
+<%
+  String webapp = request.getContextPath();
+
+
+/***************加载通用mysqldb数据*******************/
+    
+    HashMap<String,HashMap<String,ArrayList<Leaf>>> menuMap = new HashMap<String,HashMap<String,ArrayList<Leaf>>>();
+    menuMap.put("web",new HashMap<String,ArrayList<Leaf>>());
+    menuMap.put("pic",new HashMap<String,ArrayList<Leaf>>());
+    menuMap.put("video",new HashMap<String,ArrayList<Leaf>>());
+    menuMap.put("music",new HashMap<String,ArrayList<Leaf>>());
+    menuMap.put("news",new HashMap<String,ArrayList<Leaf>>());
+    menuMap.put("blog",new HashMap<String,ArrayList<Leaf>>());
+    menuMap.put("tt",new HashMap<String,ArrayList<Leaf>>());
+    menuMap.put("all",new HashMap<String,ArrayList<Leaf>>());
+    menuMap.put("cooperation",new HashMap<String,ArrayList<Leaf>>());
+    menuMap.put("apply",new HashMap<String,ArrayList<Leaf>>());
+    menuMap.put("xiaochuizhi",new HashMap<String,ArrayList<Leaf>>());
+    menuMap.put("blacklist",new HashMap<String,ArrayList<Leaf>>());
+    menuMap.put("shop",new HashMap<String,ArrayList<Leaf>>());
+    menuMap.put("wap",new HashMap<String,ArrayList<Leaf>>());
+    menuMap.put("app",new HashMap<String,ArrayList<Leaf>>());
+    menuMap.put("wenwen",new HashMap<String,ArrayList<Leaf>>());
+    
+
+    /*
+    //menuMap.put("web",new ArrayList<Leaf>());
+    menuMap.put("pic",new ArrayList<Leaf>());
+    menuMap.put("video",new ArrayList<Leaf>());
+    menuMap.put("music",new ArrayList<Leaf>());
+    menuMap.put("news",new ArrayList<Leaf>());
+    menuMap.put("blog",new ArrayList<Leaf>());
+    menuMap.put("tt",new ArrayList<Leaf>());
+    menuMap.put("all",new ArrayList<Leaf>());
+    menuMap.put("apply",new ArrayList<Leaf>());
+    */
+    
+    java.util.Iterator<?> it = BlacklistService.TABLE_MAP.entrySet().iterator();
+    
+    
+    //二级目录
+    boolean flag=false;
+    while(it.hasNext()){
+        java.util.Map.Entry<String,BlackTable> entry = (java.util.Map.Entry<String,BlackTable>)it.next();
+        BlackTable bt = (BlackTable)entry.getValue();
+        
+        if(bt.getName().indexOf("umis_")!=-1)
+            continue;
+
+        if(!bt.getType().equals("apply")&&((Integer)session.getAttribute(bt.getName()+"_list")!=null && (Integer)session.getAttribute(bt.getName()+"_list") !=1))
+            continue;
+            
+        String[] tNameArr = bt.getName().replace("ubs_","").replace("black_","").replace("white_","").split("_");
+        String product = tNameArr[0];
+        String secCla = "其它";
+        
+        //out.println(product+":"+ bt.getName()+"\n");
+        if(tNameArr.length>2){
+            secCla = tNameArr[1];
+            if(product.equals("all")&&secCla.equals("wap")){
+                product ="wap";
+                secCla = "其它";
+            }
+        }
+        if(bt.getName().equals("ubs_web_spider_actlog"))continue;
+        if(bt.getName().equals("ubs_white_web_spider_url"))continue;
+        if(bt.getName().equals("ubs_black_all_findsearchhub")){
+            secCla = "sogoufind";
+        }
+        if(bt.getName().equals("ubs_white_all_antispider")){
+                secCla = "antispider";
+        }
+        if(secCla.equals("vropen"))
+            continue;
+        
+        HashMap<String,ArrayList<Leaf>> secClaMap = menuMap.get(product);
+        
+        ArrayList<Leaf> itemList = null;
+        if(secClaMap.containsKey(secCla))
+            itemList = secClaMap.get(secCla);
+        else
+            itemList = new ArrayList<Leaf>();
+        
+        itemList.add(new Leaf(bt.getCnName(),"ubs.do?method=showBlacklist&table="+ bt.getName(),null));
+        secClaMap.put(secCla,itemList);
+        menuMap.put(product,secClaMap);
+                
+    }
+
+    //addToMenu(menuMap,"web","vropen",new Leaf("数据开放平台","open.do?method=showRes",null));
+    addToMenu(menuMap,"web","anchor",new Leaf("Anchor黑名单","anchor.do?method=showAnchorList",null));
+/***************************************************/
+
+//配置菜单项：
+
+/*********权限************/
+  
+  ArrayList<Leaf> authList = new ArrayList<Leaf>();
+  if(  (Integer)session.getAttribute("kasai_users_list") ==1) 
+    authList.add(new Leaf("用户表维护","author.do?method=showUserList",null));
+  if(  (Integer)session.getAttribute("kasai_groups_list") ==1) 
+    authList.add(new Leaf("用户组维护","author.do?method=showGroupList",null));
+  if(  (Integer)session.getAttribute("kasai_objects_list") ==1)     
+    authList.add(new Leaf("表对象维护","author.do?method=showObjectList",null));
+  if(  (Integer)session.getAttribute("kasai_objects_users_roles_list") ==1)     
+    authList.add(new Leaf("用户-对象-角色维护","author.do?method=showUsrobjroleList",null));
+  if(  (Integer)session.getAttribute("kasai_objects_groups_roles_list") ==1) 
+    authList.add(new Leaf("用户组-对象-角色维护","author.do?method=showGroupobjroleList",null));
+  if(  (Integer)session.getAttribute("kasai_roles_operatives_list") ==1) 
+    authList.add(new Leaf("角色-操作关联","author.do?method=showRoleopList",null));
+  if(  (Integer)session.getAttribute("kasai_roles_list") ==1) 
+    authList.add(new Leaf("角色维护","author.do?method=showRoleList",null));
+  if(  (Integer)session.getAttribute("kasai_operatives_list") ==1) 
+    authList.add(new Leaf("操作维护","author.do?method=showOpList",null));
+  if(  (Integer)session.getAttribute("kasai_operatives_list") ==1) 
+    authList.add(new Leaf("操作日志","log.do?method=showLogList",null));
+  
+
+
+/*********网页************/
+
+  ArrayList<Leaf> spiderList = new ArrayList<Leaf>(){{
+  add(new Leaf("域名表黑名单","domain.do?method=showDomainList",null));
+  add(new Leaf("前缀表黑名单","prefix.do?method=showPrefixList",null));
+  add(new Leaf("wap前缀表黑名单","wap_prefix.do?method=showPrefixList",null));
+  add(new Leaf("url白名单","protect.do?method=showProtectList",null));
+  add(new Leaf("spider操作日志","ubs.do?method=showBlacklist&table=ubs_web_spider_actlog",null));
+  add(new Leaf("报警白名单","ubs.do?method=showBlacklist&table=ubs_white_web_spider_url",null));
+  add(new Leaf("产品白名单","ubs.do?method=showBlacklist&table=ubs_white_web_spider_product",null));
+  add(new Leaf("低质量白名单","ubs.do?method=showBlacklist&table=ubs_white_web_spider_low_quality",null));
+  }};
+  
+  ArrayList<Leaf> hackList = new ArrayList<Leaf>(){{
+      add(new Leaf("被黑域名表黑名单","hackdomain.do?method=showDomainList",null));
+      add(new Leaf("被黑前缀表黑名单","hackprefix.do?method=showPrefixList",null));
+      add(new Leaf("被黑保护白名单","hackprotect.do?method=showProtectList",null));
+  }};
+  /*
+  if(menuMap.get("web").containsKey("spider")){
+    spiderList.addAll(menuMap.get("web").get("spider"));
+    menuMap.get("web").remove("spider");
+  }*/
+
+  ArrayList<Leaf> fwBlackList = new ArrayList<Leaf>(){{
+  //add(new Leaf("前台限制词黑名单","frontWebpage.do?method=showFrontWebpageList",null));
+  add(new Leaf("限制词分类","frontWebpageGroup.do?method=showFrontWebpageGroupList",null));
+  }};
+
+  ArrayList<Leaf> queryList = new ArrayList<Leaf>(){{
+  add(new Leaf("网页query黑名单","query_webpage.do?method=showRecordList",null));
+  //add(new Leaf("网页快照黑名单","snap.do?method=showRecordList",null));
+  }};
+
+  ArrayList<Leaf> vrList = new ArrayList<Leaf>(){{
+  add(new Leaf("VR黑名单","vr_webpage.do?method=showRecordList",null));
+  add(new Leaf("VR白名单","vr_white.do?method=showRecordList",null));
+  add(new Leaf("VR数据验证","webUIS.do?method=showAladdinValidator",null));
+
+  }};
+
+  ArrayList<Leaf> secList = new ArrayList<Leaf>(){{
+  add(new Leaf("IP黑名单","secadmin_blackip.do?method=showRecordList",null));
+  add(new Leaf("URL黑名单","secadmin_blackurl.do?method=showRecordList",null));
+  add(new Leaf("查询违禁词","secadmin_input.do?method=showRecordList",null));
+  add(new Leaf("摘要违禁词","secadmin_output.do?method=showRecordList",null));
+  add(new Leaf("URL前缀黑名单","secadmin_url_set.do?method=showRecordList",null));
+  add(new Leaf("IP白名单","secadmin_whiteip.do?method=showRecordList",null));
+  add(new Leaf("URL白名单","secadmin_whiteurl.do?method=showRecordList",null));
+  }};
+  
+  
+
+
+  ArrayList<Leaf> webList = new ArrayList<Leaf>();
+  webList.add(new Leaf("Spider黑名单",null,spiderList));
+  webList.add(new Leaf("hack黑名单",null,hackList));
+  webList.add(new Leaf("前台限制词黑名单",null,fwBlackList));
+
+//  webList.add(new Leaf("Query黑名单",null,queryList));
+  
+  //close by longsiliang 2012-09-28
+  //webList.add(new Leaf("hint黑名单","hint_webpage.do?method=showRecordList",null));
+  
+  
+  //webList.add(new Leaf("VR管理",null,vrList));
+  //webList.add(new Leaf("网页固排","webUIS.do?method=showWebFixrankList",null));
+
+  //webList.add(new Leaf("信产部黑名单",null,secList));
+  
+  //webList.add(new Leaf("Anchor黑名单","anchor.do?method=showAnchorList",null));  
+  //webList.add(new Leaf("数据开放平台","open.do?method=showRes",null));
+  //webList.add(new Leaf("流量查询系统",null,flowList));
+  
+  java.util.Iterator<?> webClaIt = menuMap.get("web").entrySet().iterator();   
+    //二级目录
+   while(webClaIt.hasNext()){
+        java.util.Map.Entry<String,ArrayList<Leaf>> entry = (java.util.Map.Entry<String,ArrayList<Leaf>>)webClaIt.next();
+        ArrayList<Leaf> leafArrayList = entry.getValue();
+
+        if ("spider".equalsIgnoreCase(entry.getKey().toString())) {
+            for (int i = 0; i < leafArrayList.size(); i++) {
+                if (leafArrayList.get(i).getNodeName().equals("产品白名单")) {
+                    leafArrayList.remove(i);
+                    break;
+                }
+            }
+        }
+
+        webList.add(new Leaf(entry.getKey().toString(),null,leafArrayList));
+  }
+
+/*********图片************/
+   ArrayList<Leaf> picList = new ArrayList<Leaf>();
+   picList.add(new Leaf("图片固排",null,
+    new ArrayList<Leaf>(){{
+        add(new Leaf("预览模式","picUIS.do?method=showPreviewList",null));
+        add(new Leaf("列表模式","picUIS.do?method=showRecordList",null));
+
+    }}
+   ));
+
+  java.util.Iterator<?> picClaIt = menuMap.get("pic").entrySet().iterator();   
+    //二级目录
+   while(picClaIt.hasNext()){
+        java.util.Map.Entry<String,ArrayList<Leaf>> entry = (java.util.Map.Entry<String,ArrayList<Leaf>>)picClaIt.next();
+        picList.add(new Leaf(entry.getKey().toString(),null,(ArrayList<Leaf>)entry.getValue()));
+  }
+
+   
+  // picList.add(new Leaf("其它", null,menuMap.get("pic")));
+
+/****新闻********/
+ArrayList<Leaf> newsList = new ArrayList<Leaf>();
+java.util.Iterator<?> newsClaIt = menuMap.get("news").entrySet().iterator();
+        //二级目录
+   while(newsClaIt.hasNext()){
+                java.util.Map.Entry<String,ArrayList<Leaf>> entry = (java.util.Map.Entry<String,ArrayList<Leaf>>)newsClaIt.next();
+                newsList.add(new Leaf(entry.getKey().toString(),null,(ArrayList<Leaf>)entry.getValue()));
+  }
+
+/****音乐*****/
+ArrayList<Leaf> musicList = new ArrayList<Leaf>();
+java.util.Iterator<?> musicClaIt = menuMap.get("music").entrySet().iterator();
+//二级目录
+while(musicClaIt.hasNext()){
+   java.util.Map.Entry<String,ArrayList<Leaf>> entry = (java.util.Map.Entry<String,ArrayList<Leaf>>)musicClaIt.next();
+   musicList.add(new Leaf(entry.getKey().toString(),null,(ArrayList<Leaf>)entry.getValue()));
+}
+     
+/*********视频************/
+   ArrayList<Leaf> videoList = new ArrayList<Leaf>();
+   videoList.add(new Leaf("视频固排",null,
+    new ArrayList<Leaf>(){{
+        add(new Leaf("预览模式","videoUIS.do?method=showPreviewList",null));
+        add(new Leaf("列表模式","videoUIS.do?method=showRecordList",null));
+
+    }}
+   ));
+
+  java.util.Iterator<?> videoClaIt = menuMap.get("video").entrySet().iterator();   
+   while(videoClaIt.hasNext()){
+        java.util.Map.Entry<String,ArrayList<Leaf>> entry = (java.util.Map.Entry<String,ArrayList<Leaf>>)videoClaIt.next();
+        videoList.add(new Leaf(entry.getKey().toString(),null,(ArrayList<Leaf>)entry.getValue()));
+  }   
+  //videoList.add(new Leaf("其它", null,menuMap.get("video")));
+
+  ArrayList<Leaf> menuList = new ArrayList<Leaf>();
+  if(  (Integer)session.getAttribute("kasai_users_list") ==1) 
+    menuList.add(new Leaf("权限",null,authList));  
+  menuList.add(new Leaf("网页",null,webList));
+  menuList.add(new Leaf("图片",null,picList));
+  menuList.add(new Leaf("视频",null,videoList));
+ 
+  //menuList.add(new Leaf("音乐",null,musicList));
+  menuList.add(new Leaf("音乐",null,menuMap.get("music").get("其它")));
+  menuList.add(new Leaf("新闻",null,newsList));
+  menuList.add(new Leaf("博客",null,menuMap.get("blog").get("其它")));
+  menuList.add(new Leaf("微博",null,menuMap.get("tt").get("其它")));
+  menuList.add(new Leaf("购物",null,menuMap.get("shop").get("其它")));
+ 
+  /****无线********/
+  ArrayList<Leaf> wapList = new ArrayList<Leaf>();
+  java.util.Iterator<?> wapClaIt = menuMap.get("wap").entrySet().iterator();
+          //二级目录
+   while(wapClaIt.hasNext()){
+      java.util.Map.Entry<String,ArrayList<Leaf>> entry = (java.util.Map.Entry<String,ArrayList<Leaf>>)wapClaIt.next();
+      wapList.add(new Leaf(entry.getKey().toString(),null,(ArrayList<Leaf>)entry.getValue()));
+  }
+  menuList.add(new Leaf("无线",null,wapList));  
+     
+  /****问问*****/   
+  ArrayList<Leaf> wenwenList = new ArrayList<Leaf>();
+  java.util.Iterator<?> wenwenClaIt = menuMap.get("wenwen").entrySet().iterator();
+          //二级目录
+   while(wenwenClaIt.hasNext()){
+      java.util.Map.Entry<String,ArrayList<Leaf>> entry = (java.util.Map.Entry<String,ArrayList<Leaf>>)wenwenClaIt.next();
+      wenwenList.add(new Leaf(entry.getKey().toString(),null,(ArrayList<Leaf>)entry.getValue()));
+  }
+  menuList.add(new Leaf("问问",null,wenwenList));
+  
+  /****其它*****/
+  ArrayList<Leaf> allList = new ArrayList<Leaf>();
+  java.util.Iterator<?> allClaIt = menuMap.get("all").entrySet().iterator();   
+   while(allClaIt.hasNext()){
+        java.util.Map.Entry<String,ArrayList<Leaf>> entry = (java.util.Map.Entry<String,ArrayList<Leaf>>)allClaIt.next();
+        allList.add(new Leaf(entry.getKey().toString(),null,(ArrayList<Leaf>)entry.getValue()));
+  }   
+  menuList.add(new Leaf("其它",null,allList));
+  
+
+  
+  /*
+  java.util.Iterator coopClaIt = menuMap.get("cooperation").entrySet().iterator();  
+  ArrayList coopList = new ArrayList();
+    //二级目录
+   while(coopClaIt.hasNext()){
+        java.util.Map.Entry entry = (java.util.Map.Entry)coopClaIt.next();
+        coopList.add((ArrayList<Leaf>)entry.getValue());
+        coopList.add(new Leaf(entry.getKey().toString(),null,(ArrayList<Leaf>)entry.getValue()));
+  }*/
+
+  if(menuMap.containsKey("cooperation")){
+    if(menuMap.get("cooperation").containsKey("xml")){  
+        menuMap.get("cooperation").get("xml").add(new Leaf("XML_PID管理","cooperation.do?method=showList",null));
+  //coopList.add(new Leaf("XML 合作PID","cooperation.do?method=showList",null));
+        menuList.add(new Leaf("部门合作",null,menuMap.get("cooperation").get("xml")));
+    }
+  }
+  
+  
+  
+  menuList.add(new Leaf("申请管理",null,menuMap.get("apply").get("其它")));
+
+/*********test************/
+  ArrayList<Leaf> apolloList = new ArrayList<Leaf>();
+  apolloList.add(new Leaf("基本信息","apollo/index.jsp?act=basic",null));
+  apolloList.add(new Leaf("趋势查询","apollo/index.jsp?act=trend",null));
+  apolloList.add(new Leaf("流量查询","apollo/index.jsp?act=flow",null));
+
+  menuList.add(new Leaf("Apollo",null,apolloList));  
+  
+  /*************************/
+
+  ArrayList<Leaf> flowList = new ArrayList<Leaf>(){{
+  //add(new Leaf("普通请求","flow/index.jsp?table=umis_web_apache_common_stat",null));
+  add(new Leaf("IP查询","flow/index.jsp?table=umis_web_apache_ip_stat",null));
+  add(new Leaf("PID查询","flow/index.jsp?table=umis_web_apache_pid_stat",null));
+  add(new Leaf("QUERY查询","flow/index.jsp?table=umis_web_apache_query_stat",null));
+  //add(new Leaf("普通请求","flow/list.jsp?table=umis_web_apache_common_stat",null));
+  //add(new Leaf("流量查询系统","flow/index.jsp?act=basic",null));
+  //add(new Leaf("查询违禁词","secadmin_input.do?method=showRecordList",null));
+  }};
+
+
+  menuList.add(new Leaf("流量查询",null,flowList));  
+ 
+  ArrayList<Leaf> uigsList = new ArrayList<Leaf>();
+  uigsList.add(new Leaf("web","uigs/index.jsp?table=umis_web_uigs_minpvuv_stat",null));
+  menuList.add(new Leaf("UIGS",null,uigsList));  
+  
+
+  ArrayList<Leaf> dataManagerList = new ArrayList<Leaf>();
+  dataManagerList.add(new Leaf("数据导出","dataManage/export.jsp",null));
+  menuList.add(new Leaf("数据管理",null,dataManagerList));    
+  
+  
+  Leaf root = new Leaf("",null,menuList);
+  %>   
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+<title>UMIS－统一管理信息系统</title>
+
+<meta name="keywords" content="" />
+
+<meta name="description" content="" />
+
+<link rel="stylesheet" type="text/css" href="Ext/extjs2.0/resources/css/ext-all.css" />
+<link rel="stylesheet" type="text/css" href="Ext/extjs2.0/resources/css/ext-patch.css" />
+<link rel="stylesheet" type="text/css" href="Ext/extjs2.0/dataview/data-view.css" />
+    <link rel="stylesheet" type="text/css" href="<%=webapp %>/Chosen/chosen.min.css" />
+<link href="css/style.css" rel="stylesheet" type="text/css" media="screen" />
+<link type="text/css" href="css/menu.css" rel="stylesheet" />
+<link rel="stylesheet" type="text/css" href="Ext/css/style.css" />
+
+<script type="text/javascript" src="js/jquery.js"></script>
+<script type="text/javascript" src="js/menu.js"></script>
+
+
+<script type="text/javascript" src="Ext/extjs2.0/adapter/ext/ext-base.js"></script>
+<script type="text/javascript" src="Ext/extjs2.0/ext-all.js"></script>
+
+
+<script type="text/javascript" src="Ext/extjs2.0/source/locale/ext-lang-zh_CN.js"></script>
+<script type="text/javascript" src="Ext/extjs2.0/ext/themeChange.js"></script>
+<script type="text/javascript" src="Ext/extjs2.0/dataview/DataView-more.js"></script>
+<script type="text/javascript" src="<%=webapp%>/pages/menu/EditableItem.js"></script>
+<script type="text/javascript" src="<%=webapp%>/pages/menu/RangeMenu.js"></script>
+<script type="text/javascript" src="<%=webapp%>/pages/grid/GridFilters.js"></script>
+<script type="text/javascript" src="<%=webapp%>/pages/grid/filter/Filter.js"></script>
+<script type="text/javascript" src="<%=webapp%>/pages/grid/filter/StringFilter.js"></script>
+<script type="text/javascript" src="<%=webapp%>/pages/grid/filter/DateFilter.js"></script>
+<script type="text/javascript" src="<%=webapp%>/pages/grid/filter/ListFilter.js"></script>
+<script type="text/javascript" src="<%=webapp%>/pages/grid/filter/NumericFilter.js"></script>
+<script type="text/javascript" src="<%=webapp%>/pages/grid/filter/BooleanFilter.js"></script>
+
+
+<link rel="stylesheet" type="text/css" href="<%=webapp%>/Ext/extjs2.0/multiselect/multiselect.css"/>
+<script type="text/javascript" src="<%=webapp%>/Ext/extjs2.0/multiselect/DDView.js"></script>
+<script type="text/javascript" src="<%=webapp%>/Ext/extjs2.0/multiselect/MultiSelect.js"></script>
+<script type="text/javascript" src="<%=webapp%>/Ext/extjs2.0/multiselect/ItemSelector.js"></script>
+<script type="text/javascript" src="<%=webapp%>/front_webpage/datepicker/WdatePicker.js"></script>
+    <script type="text/javascript" src="<%=webapp%>/Chosen/chosen.jquery.min.js"></script>
+    <script type="text/javascript" src="<%=webapp%>/Chosen/ext_chosen.js"></script>
+
+<script type="text/javascript" src="js/chart/FusionCharts.js"></script>
+
+<style type="text/css">
+.user{float:right;font-weight:bold};
+</style>
+</head>
+
+<body>
+    <script>
+    if ((typeof Range !== "undefined") && !Range.prototype.createContextualFragment)
+    {
+        Range.prototype.createContextualFragment = function(html)
+        {
+            var frag = document.createDocumentFragment(), 
+            div = document.createElement("div");
+            frag.appendChild(div);
+            div.outerHTML = html;
+            return frag;
+        };
+    }
+
+    Ext.util.CSS.swapStyleSheet("theme", "Ext/extjs2.0/resources/css/xtheme-gray.css");  
+    
+    Ext.onReady(function(){     
+     
+     var panel = new Ext.Panel({
+            frame:true,
+            applyTo: 'page',
+            //width: 960,
+            autoWidth:true,
+            bodyStyle:'padding:5px 95px 5px 95px',
+            collapsible:true,
+            header:false,
+            autoScroll: true,
+            layout:'border',
+        title:'人工干预结果预览区域',
+        /*
+        tbar :
+           [
+            {
+                          xtype : 'tbtext',
+                          text : '工具条'
+                    },{
+                          pressed : true,
+                          text : '删除'
+            }
+          ],//工具条按钮     
+        */
+        /***模块内容**/   
+        items : [
+
+            {
+                title : '功能菜单',
+                split:true,
+                collapsible: true,
+                autoScroll:true,
+                region:'west',//指定子面板所在区域为west
+                id:"westContent",
+                style:'display:none',
+                height:500,
+                width: 185
+            },
+                /*
+            new Ext.TabPanel({
+                id : 'mainContent',
+                contentEl : 'welcome',
+                region: 'center',
+                enableTabScroll: true,
+                autoScroll:true,
+                height:300,
+                
+            }),
+            */
+            
+            {
+                title: '操作区域',
+                contentEl : 'welcome',
+                collapsible: true,
+                id : 'mainContent',
+                autoScroll:true,
+                height:500,
+                region:'center'//指定子面板所在区域为center
+            },
+            /*
+            new Ext.TabPanel({
+                title: '操作区域',
+                contentEl : 'welcome',
+                collapsible: true,
+                id : 'mainContent',
+                autoScroll:true,
+                height:500,
+                region:'center'//指定子面板所在区域为center
+            
+
+            })          
+            ,*/{
+                title: '副操作区域',     
+                hidden:true,
+                split:true,
+                autoScroll:true,
+                collapsible: true,
+                collapsed:true,
+                id : 'eastContent',
+                autoScroll:true,
+                width:800,
+                height:500,
+                region:'east'//指定子面板所在区域为east
+                
+            }
+        ]
+        
+        ,
+         bbar : [//底部工具条
+                    {//不指定xtype属性是默认为按钮
+                      text : "切换回老版",
+                      listeners : {
+                            click : function(node,e){
+                                window.location="index_old.jsp";
+                            }
+                    }
+                      
+                }
+          ]//底部工具条
+        
+            });
+     function getParam(href,name){
+         if(href==null)return "";
+         if(href.indexOf("?")!=-1){
+             var params = href.substr(href.indexOf("?")+1).split("&");
+             for(var i=0,len=params.length;i<len;i++){
+                 var oneParam = params[i],kv = oneParam.split("=");
+                 if(name==kv[0]){
+                     if(kv.length==1)return "";
+                     else return kv[1];
+                 }   
+             }
+         }
+         return "";
+     }
+     function loadMainContentByIndex(url,title){
+         //url+="&r="+Math.random();
+         var mainPanel = Ext.getCmp('mainContent');  
+         mainPanel.load({
+                         url: url,
+                         callback : function(){
+                             mainPanel.setTitle(title);
+                             //var m=Ext.getCmp('mainContent');
+                             //m.setTitle("");
+                         },
+                         scripts: true
+         });
+     }
+     var curHref = location.href,index=getParam(curHref,"index");
+     if(index.length>0){
+         if(index=="webfront"){
+             loadMainContentByIndex("frontWebpage.do?method=showFrontWebpageList","网页前台限制词");
+         }else if(index=="webquery"){
+             loadMainContentByIndex("query_webpageblack.do?method=showRecordList","网页Query黑名单");
+         }else{
+             loadMainContentByIndex("ubs.do?method=showBlacklist&table="+index,index);
+         }
+     }
+         });
+
+function loadMainContent(href){
+    
+    var loadUrl = href.attributes["url"].value;
+    if(loadUrl.indexOf("uigs/")!=-1)
+        loadUrl += "&r="+Math.random();
+             
+    var mainPanel = Ext.getCmp('mainContent');  
+    mainPanel.load({
+                    url: loadUrl,
+                    callback : function(){
+                        mainPanel.setTitle(href.className);
+                        //var m=Ext.getCmp('mainContent');
+                        //m.setTitle("");
+                    },
+                    scripts: true
+    });
+    
+}
+
+function loadMainContentByUrl(loadUrl){
+
+    if(loadUrl.indexOf("uigs/")!=-1)
+        loadUrl += "&r="+Math.random();
+
+    var mainPanel = Ext.getCmp('mainContent');  
+    mainPanel.load({
+                    url: loadUrl,
+                    callback : function(){
+                        //var m=Ext.getCmp('mainContent');
+                        //m.setTitle("");
+                    },
+                    scripts: true
+    });
+    
+}
+
+</script>   
+<div id="wrapper">
+
+    <div id="logo">
+
+        <h1><a href="#">UMIS  </a></h1>
+
+        <p style="padding-left:150px;"><em> —— <a href="http://www.freecsstemplates.org/">统一管理信息系统</a></em></p>
+        <div style="position:absolute;top:10px;right:20px;color:black">
+<span style="color: #E5FFC4;font-weight:bold">欢迎您！<%=session.getAttribute("user")%></span>&nbsp;
+            <a href="logout.jsp">登出</a>&nbsp;|&nbsp;<a href="mailto:longsiliang@sogou-inc.com">联系开发</a>&nbsp;|&nbsp;<a href="http://cvs.so.sohu.com/svn/websearch/trunk/FrontWeb/开发文档/前端应用/UMIS/【使用手册】UMIS系统V1.0.doc">使用手册</a>     
+        </div>
+    </div>
+
+    <hr />
+
+    <!-- end #logo -->
+
+    <div id="header">
+
+        <div id="menu">
+        <%
+            StringBuffer menuSb = new StringBuffer();
+            menuSb.append(genMenuList(root,true));
+            out.println(menuSb.toString());
+        %>
+
+        </div>
+
+        <!-- end #search -->
+
+    </div>
+
+    <!-- end #header -->
+
+    <!-- end #header-wrapper -->
+
+    <div id="page" style="height:800px;">
+
+    
+    </div>
+    <!-- end #page -->
+    <div id="welcome" style='height:400px;;width:100%;padding-top:50px;'>
+        <table style="width: 100%;" border="0">
+            <tr>
+                <td align="center">
+                <div style="width: 600px; height: 420px; overflow: auto;" align="center">
+                <font align="center" size="5">&nbsp;&nbsp;&nbsp;&nbsp;欢迎使用统一管理信息系统UMIS</font>
+                <br/><br/>
+                <p><img alt="logo" src="images/logo.bmp"></p><br/>
+                <font color="red" size="4">UMIS各权限申请表地址(请在线填写)：<a href="apply.jsp">apply.jsp</a></font><br/><br/>
+                <!--
+                <font color="blue">
+                    UMIS新界面上线，如果有使用问题，想切换回老版本的，请点击 <a href="index_old.jsp">这里</a> <br/>
+                </font>
+                 -->
+                </div>
+                </td>
+            </tr>
+            <tr>
+                <td align="center">
+                    <div style="width: 800px;overflow: auto;" align="left">
+                        <!-- ul>
+                            <li>1.Ubs的hint改进需求包括：增加生效截止时间和白名单类型(封禁字段为否)</li>
+                            <li>2.Ubs的前台限制词黑名单改进需求是：增加白名单类型(封禁字段为否)</li>
+                            <li>3.Ubs将07-20 11:30 至07-24 17:00提交到旧query、snap库中的记录都导入新库</li>
+                            <li>4.Umis新增需求是增加网页hint人工干预模块（原来的hint彩蛋系统）</li>
+                        </ul> -->
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    
+    <div id="footer-bgcontent">
+
+    <div id="footer" >  
+        <p>Copyright (c) 2010 sogou.com. All rights reserved. Design by <a href="mailto:longsiliang@sogou-inc.com">Longsiliang</a>.<a href="http://apycom.com/"  style="display:none;">Apycom jQuery Menus</a></p>
+    </div>
+
+    </div>
+
+    <!-- end #footer -->
+
+</div>
+
+</body>
+
+</html>

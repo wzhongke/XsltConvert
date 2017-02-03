@@ -1,0 +1,493 @@
+<%@ page language="java" contentType="text/html; charset=GBK"
+    pageEncoding="GBK"%>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=GBK">
+	<title>Anchor记录列表</title>
+</head>
+
+<script type="text/javascript">
+	var PageSize  = 18;
+
+	Ext.namespace('Ext.exampledata');
+	Ext.onReady(function(){
+		
+		//创建新增或单独修改表记录信息的form表单
+		Ext.QuickTips.init();
+		Ext.form.Field.prototype.msgTarget = 'side';//统一指定错误信息提示方式
+		
+		var dataStore = new Ext.data.Store({//配置分组数据集
+			reader: new Ext.data.XmlReader({
+				totalRecords: "total",
+				record: "item",
+				id: "id"
+			},
+			Ext.data.Record.create([
+				{name: 'id'},
+				{name: 'docId'},
+				{name: 'keyword'},
+				{name: 'dataStatus'},
+				{name: 'checkStatus'},
+				{name: 'createDate'},
+				{name: 'modifyDate'},
+				{name: 'updateDate'},
+				{name: 'updateType'},
+				{name: 'validStatus'},
+				{name: 'validInfo'},
+				{name: 'status'}
+			])
+			),
+			
+			proxy : new Ext.data.HttpProxy({
+				url : 'open.do?method=showDataList&group=<%=request.getParameter("group")%>&resId=<%=request.getParameter("resId")%>'
+			}),
+			sortInfo: {field: 'id', direction: 'DESC'},
+	  		remoteSort: true
+		})
+		
+		
+	
+
+		
+		//开始查询表单部分
+		var dataDr = new Ext.FormPanel({
+	    	labelWidth: 125,
+	        frame: true,
+	  	  	bodyStyle:'padding:5px 5px 0',
+	  	 	autoScroll: true,
+	  	  	width: 500,
+	        defaults: {width: 175},
+	      	//增加表单键盘事件
+	        keys:[
+	         {
+	             key: [10,13],
+	             fn:query
+	         } ],
+	        items: [{
+	        	xtype:'textfield',
+				width : 200,
+				id : 'q_keyword',
+				name : 'q_keyword',
+				fieldLabel:'关键词'
+	        }
+			],
+			buttons:[
+				{
+					text : '查询',
+					handler : function(){
+						query(true);
+					}
+				},
+				{
+					text : '返回',
+					handler : function(){
+						query(false);
+					}
+				}
+			]
+	    });
+
+
+		dataDr.render('dataDr');
+
+
+		<%//根据权限信息显示工具栏
+		StringBuffer toolbar_str = new StringBuffer();
+    	//toolbar_str.append("{text : '新增',iconCls:'add',handler : showAdd},");
+    	//toolbar_str.append("{text : '批量新增',iconCls:'batch-add',handler : showBatchAdd},");
+    	//toolbar_str.append("{text : '修改',iconCls:'option',handler : showModify},");
+    	toolbar_str.append("{text : '批量审核',iconCls:'option',handler : batchDataCheck},");
+    	toolbar_str.append("{text : '全部生效',iconCls:'option',handler : allCheck},");
+    	//toolbar_str.append("{text : '删除',iconCls:'remove',handler : showDelete},");
+    	//toolbar_str.append("{text : '上线',iconCls:'batch-remove',handler : synchronize},");
+	    
+	    toolbar_str.deleteCharAt(toolbar_str.length()-1);
+	    %>
+		//创建工具栏组件
+		var dataToolbar = new Ext.Toolbar([
+		    <%=toolbar_str.toString()%>
+		]);
+
+    	//创建分页工具栏
+    	var dataPagingBar = new Ext.PagingToolbar({
+    		pageSize: PageSize,
+	        store: dataStore,
+	        displayInfo: true,
+	        displayMsg: '显示 {0} - {1} , 共 {2} 条记录',
+	        emptyMsg: "没有任何记录",
+	        items:['-']
+    	});
+
+		function keywordRender(val){
+			var link = '<a href="http://www.sogou.com/web?query='+ encodeURIComponent(val) +'" target="_blank">'+val+'</a>';
+			return link;	
+		}
+
+		function utRender(val){
+			if(val==0)
+				return "不变";
+			if(val==1)
+				return "关键词变化";
+			if(val==2)
+				return "内容变化";
+		
+		}
+
+		function vltRender(val){
+			if(val==0)
+				return "错误";
+			if(val==1)
+				return "正确";
+		}
+
+		//创建Grid表格组件
+		var dataCb = new Ext.grid.CheckboxSelectionModel();		
+		var dataRecordGrid = new Ext.grid.GridPanel({
+			applyTo : 'dataGrid-div',
+			tbar : dataToolbar,
+			frame:true,
+			loadMask: true,
+			autoScroll: true,
+			//width: 800,
+			autoWidth:true,
+			store: dataStore,
+			viewConfig : {
+				autoFill : true
+			},
+			sm : dataCb,
+			columns: [//配置表格列
+		        //new Ext.grid.RowNumberer({
+				//	header : '行号',
+				//	width : 40
+				//}),//表格行号组件
+				dataCb,
+				{header: "DocId", width: 40, dataIndex: 'docId'},
+				{header: "关键词", width: 120, dataIndex: 'keyword',renderer: keywordRender,sortable:true},
+				{header: "数据状态", width: 50, dataIndex: 'dataStatus'},
+				{header: "审核状态", width: 50, dataIndex: 'checkStatus',sortable:true},
+				{header: "更新类型", width: 50, dataIndex: 'updateType' ,renderer: utRender,sortable:true},
+				{header: "校验状态", width: 50, dataIndex: 'validStatus' ,renderer: vltRender},
+				{header: "修改时间", width: 100, dataIndex: 'modifyDate'},
+				{header: "更新时间", width: 100, dataIndex: 'updateDate',sortable:true},
+				{header: "校验信息", width: 50, dataIndex: 'validInfo',sortable:false}
+			],
+			
+	        // paging bar on the bottom
+	        bbar: dataPagingBar
+			
+		});		
+		
+		dataStore.load({params:{start:0, limit:PageSize}});
+		
+		dataRecordGrid.addListener('rowdblclick', dataclick);
+		
+		
+		var dataForm = new Ext.FormPanel({
+			name:"dataInput",
+			labelSeparator : ":",
+			frame:true,
+			border:false,
+			autoHeight: true,
+			labelWidth : 130, 
+			items : [
+					
+				{
+					xtype:'textfield',
+					width : 150,
+					fieldLabel:"关键词",
+					value:"",
+					//readOnly:true,
+					id:"keyword",
+					name:"keyword"
+					//,vtype:'url'
+				},
+				{
+					xtype:'textfield',
+					width : 250,
+					fieldLabel:"URL",
+					value:"",
+					//readOnly:true,
+					id:"url",
+					name:"url"
+					//,vtype:'url'
+				},				
+				{
+					xtype:'textarea',
+					width : 600,
+					height : 300,
+					name : 'content',
+					id : 'content',
+					fieldLabel:'XML片段',
+					readOnly:true,
+					allowBlank : false,
+					value: ''					
+				}
+				,{
+					xtype:'hidden',
+					name : 'tplId',
+					id :'tplId',
+					value:'<%=request.getParameter("tplId")%>'
+				}										
+			],
+			buttons:[
+				{
+					text : '验证并预览',
+					id : 'btn_preview',
+					handler : previewForm
+				},			
+			
+				/*
+				{
+					text : '提交',
+					id : 'btn_submmit',
+					handler : submitForm
+				},
+				*/
+				{
+					text : '关闭',
+					handler : function(){
+						dataWin.hide();
+					}
+				}
+			]
+		});		
+		
+		
+		//删除原有窗口对象
+		dataWin = Ext.getCmp('data_window');
+		if(dataWin){
+			dataWin.destroy();
+		}
+		var dataWin = new Ext.Window({
+			id: 'data_window',
+			layout:'fit',
+		    width:750,
+		    closeAction:'hide',
+			resizable : false,
+			shadow : true,
+			modal :true,
+		    closable:true,
+		    bodyStyle:'padding:5 5 5 5',
+		    animCollapse:true,
+			items:[dataForm],
+			y: 100
+		});		
+		
+
+		function dataclick(grid, rowIndex, e) {
+			var recs = dataRecordGrid.getSelectionModel().getSelections();
+			if(recs.length == 0){
+				Ext.MessageBox.alert('提示','请选择要进行操作的记录！');
+			}
+			else if(recs.length > 1)
+				Ext.MessageBox.alert("提示","每次只能修改一条记录信息。")
+			else{
+				//加载
+				dataForm.form.reset();
+				//dataForm.isAdd = false;
+				dataWin.setTitle("修改记录信息");
+				dataWin.show();
+			
+				//Ext.getCmp("res_id").getEl().dom.value = recs[0].get("id") ;
+				
+				dataForm.form.load({
+					waitMsg : '正在加载数据请稍后',//提示信息
+					waitTitle : '提示',//标题
+					url : 'open.do?method=getDataContent',//请求的url地址
+					params : {docId:recs[0].get("docId"),dataId : recs[0].get("id"),dataGroup:<%=request.getParameter("group")%>},
+					method:'GET',//请求方式
+					success:function(form,action){//加载成功的处理函数
+					},
+					failure:function(form,action){//加载失败的处理函数
+						Ext.Msg.alert('提示','数据加载失败');
+					}
+				});
+						
+			}
+		}
+		
+		function allCheck(){
+				var msgTip = Ext.MessageBox.show({
+					title:'提示',
+					width : 250,
+					msg:'正在更新资源状态请稍后......'
+				});
+				Ext.Ajax.request({
+					url : 'open.do?method=allCheckData',
+					params : {resId : <%=request.getParameter("resId")%>,group:<%=request.getParameter("group")%>},
+					method : 'GET',
+					success : function(response,options){
+						msgTip.hide();
+						var result = Ext.util.JSON.decode(response.responseText);
+						if(result.success){
+							//服务器端数据成功删除后，同步删除客户端列表中的数据
+							dataStore.load({params:{start:0, limit:PageSize}});
+							Ext.Msg.alert('提示','更新数据成功。');
+						}else{
+							Ext.Msg.alert('提示','更新数据失败！');
+						}
+					},
+					failure : function(response,options){
+						msgTip.hide();
+						Ext.Msg.alert('提示','更新数据失败！');
+					}
+				});					
+		}
+		
+		function query(tag){
+			var keyword;
+			if(tag){
+				keyword = document.getElementById("q_keyword").value;
+			}else{
+				keyword = '';
+				document.getElementById("q_keyword").value='';
+			}
+			
+			var url = "open.do?method=showDataList&group=<%=request.getParameter("group")%>&resId=<%=request.getParameter("resId")%>&keyword="+encodeURIComponent(keyword);
+			dataStore.proxy.conn.url = url;
+			dataStore.load({params:{start:0, limit:PageSize}});
+		}
+		
+		function batchDataCheck(){
+			var recs = getDataCheckedIdList();
+			var num = recs.length;
+			if(num==0){
+				Ext.MessageBox.alert('提示','请选择要进行操作的记录！');
+			}else{
+				var msgTip = Ext.MessageBox.show({
+					title:'提示',
+					width : 250,
+					msg:'正在更新资源状态请稍后......'
+				});
+				Ext.Ajax.request({
+					url : 'open.do?method=batchCheckData',
+					params : {recordIdList : recs.toString(),resId : <%=request.getParameter("resId")%>,group:<%=request.getParameter("group")%>},
+					method : 'GET',
+					success : function(response,options){
+						msgTip.hide();
+						var result = Ext.util.JSON.decode(response.responseText);
+						if(result.success){
+							//服务器端数据成功删除后，同步删除客户端列表中的数据
+							dataStore.load({params:{start:0, limit:PageSize}});
+							Ext.Msg.alert('提示','更新资源成功。');
+						}else{
+							Ext.Msg.alert('提示','更新资源失败！');
+						}
+					},
+					failure : function(response,options){
+						msgTip.hide();
+						Ext.Msg.alert('提示','更新资源失败！');
+					}
+				});			
+			
+			}			
+		}
+		
+		//取得所选域名记录信息
+		function getDataCheckedIdList(){
+			var recs = dataRecordGrid.getSelectionModel().getSelections();
+			var list = [];
+			if(recs.length == 0){
+				Ext.MessageBox.alert('提示','请选择要进行操作的记录！');
+				return;
+			}else{
+				for(var i = 0 ; i < recs.length ; i++){
+					var rec = recs[i];
+					list.push(rec.get('id'));
+				}
+			}
+			return list;
+		}		
+		
+		
+				//预览表单提交数据的效果
+		function previewForm(){
+				dataForm.form.submit({
+					//clientValidation:true,//进行客户端验证
+					waitMsg : '正在提交数据请稍后',//提示信息
+					waitTitle : '提示',//标题
+					url : 'open.do?method=previewData',//请求的url地址
+					method:'POST',//请求方式
+					success:function(form,action){//加载成功的处理函数
+						var previewCode = action.result.cause;
+						//Ext.Msg.alert('预览效果',previewCode);
+						Ext.MessageBox.show({
+		                   title: '预览效果',
+		                   msg: '如下效果满意吗？<br><br><br><br>' + previewCode ,
+		                   buttons: Ext.MessageBox.YESNO,
+		                   icon: Ext.MessageBox.QUESTION
+		                   /*,
+		                   fn: function(btnId){
+		                       if(btnId == 'yes')
+		                    	   Ext.getCmp('btn_submmit').enable();
+		                       else
+		                       	   Ext.getCmp('btn_submmit').disable();
+		                   }*/
+		                })
+					},
+					failure:function(form,action){//新增失败的处理函数
+						var failcause = action.result.cause;
+						Ext.MessageBox.show({
+				           title: '提示',
+				           msg: '预览记录失败。原因是：'+failcause,
+				           buttons: Ext.MessageBox.OK,
+				           icon: Ext.MessageBox.ERROR
+				        });
+					}
+				});
+		
+		}
+		
+	});
+</script>
+<body>
+
+<div id="dataDr" style="width:100%;height:20%;"></div>
+<div id='dataGrid-div' style="width:100%; height:80%;"></div>
+</body>
+</html>
+<style type="text/css">
+	.vrnews {
+		color:#9C9C9C;
+		font-size:13px;
+		line-height:1.4;
+	}
+	.vrnews ul {
+		list-style-image:none;
+		list-style-position:outside;
+		list-style-type:none;
+		padding-left:16px;
+	}
+	#content {
+		clear:left;
+		margin-bottom:28px;
+		width:533px;
+	}
+	#content DIV {	
+		PADDING-RIGHT: 10px;	
+		PADDING-LEFT: 10px;	
+		MARGIN-BOTTOM: 19px;	
+		PADDING-BOTTOM: 0px;	
+		PADDING-TOP: 0px
+	}
+	#content h2, #content h3 {
+		color:#9C9C9C;
+		font-weight:normal;
+	}
+	#content h2 a, #content h3 a {
+		font-size:16px;
+	}
+	a:link {
+		color:#0000CC;
+		text-decoration:underline;
+	}
+	#content p {
+		font-size:13px;
+		font-family:Arial,Helvetica,sans-serif;
+		line-height:1.4;
+		text-align:justify;
+	}
+	.url, .agentads .url, .agentads .url a:link, .agentads .url a:visited {
+		color:#008000;
+	}
+</style>

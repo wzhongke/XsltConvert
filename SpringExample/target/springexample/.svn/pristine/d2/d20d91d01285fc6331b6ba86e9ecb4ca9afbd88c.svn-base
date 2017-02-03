@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts-config PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 1.1//EN" "http://jakarta.apache.org/struts/dtds/struts-config_1_1.dtd">
+
+<struts-config>
+	<data-sources />
+	<form-beans />
+	<global-exceptions />
+	<global-forwards />
+	
+	<action-mappings>
+		<!-- new umis -->
+		<action path="/progress" type="com.sohu.frontweb.ubs.lodge.ProgressAction" parameter="method"/>
+		
+		<action path="/query_webpageblack" type="com.sohu.frontweb.query.action.WebpageAction" parameter="method">
+			<forward name="list" path="/query/webpageListblack.jsp" />
+		</action>
+		<!-- hack -->
+		<action path="/hackdomain" type="com.sohu.frontweb.blacklist.action.HackDomainAction" parameter="method">
+			<forward name="hackdomainList" path="/pages/hackDomainList.jsp" />
+		</action>
+		<action path="/hackprefix" type="com.sohu.frontweb.blacklist.action.HackPrefixAction" parameter="method">
+			<forward name="hackprefixList" path="/pages/hackPrefixList.jsp" />
+		</action>
+		<action path="/hackprotect" type="com.sohu.frontweb.blacklist.action.HackProtectAction" parameter="method">
+			<forward name="hackprotectList" path="/pages/hackProtectWhiteList.jsp" />
+		</action>
+		<!-- spider部分 -->
+		<action path="/domain" type="com.sohu.frontweb.blacklist.action.DomainAction" parameter="method">
+			<forward name="domainList" path="/pages/domainList.jsp" />
+		</action>
+		<action path="/prefix" type="com.sohu.frontweb.blacklist.action.PrefixAction" parameter="method">
+			<forward name="prefixList" path="/pages/prefixList.jsp" />
+		</action>
+		<action path="/wap_prefix" type="com.sohu.frontweb.blacklist.action.WapPrefixAction" parameter="method">
+			<forward name="wapPrefixList" path="/pages/wapPrefixList.jsp" />
+		</action>
+		<action path="/protect" type="com.sohu.frontweb.blacklist.action.ProtectAction" parameter="method">
+			<forward name="protectList" path="/pages/protectList.jsp" />
+		</action>
+		<action path="/log" type="com.sohu.frontweb.blacklist.action.LogAction" parameter="method">
+			<forward name="logList" path="/pages/logList.jsp" />
+		</action>
+		<!-- 权限分配部分 -->
+		<action path="/author" type="com.sohu.frontweb.author.action.AuthorAction" parameter="method">
+			<forward name="userList" path="/author/userList.jsp" />
+			<forward name="groupList" path="/author/groupList.jsp" />
+			<forward name="objectList" path="/author/objectList.jsp" />
+			<forward name="usrobjroleList" path="/author/usrobjroleList.jsp" />
+			<forward name="roleopList" path="/author/roleopList.jsp" />
+			<forward name="roleList" path="/author/roleList.jsp" />
+			<forward name="opList" path="/author/opList.jsp" />
+			<forward name="groupobjroleList" path="/author/groupobjroleList.jsp" />		
+		</action>
+		<!-- 网页前台部分 -->
+		<action path="/frontWebpage" type="com.sohu.frontweb.front_webpage.action.FrontWebpageAction" parameter="method">
+			<forward name="frontWebpageList" path="/front_webpage/front_webpageList.jsp" />
+		</action>
+		<action path="/frontWebpageGroup" type="com.sohu.frontweb.front_webpage.action.FrontWebpageGroupAction" parameter="method">
+			<forward name="frontWebpageGroupList" path="/front_webpage/front_webpageGroupList.jsp" />
+		</action>
+		<action path="/batdomain" type="com.sohu.frontweb.blacklist.action.BatchDomainAction" parameter="method">
+		</action>
+		<!-- query部分 -->
+		<action path="/query_webpage" type="com.sohu.frontweb.query.action.WebpageAction" parameter="method">
+			<forward name="list" path="/query/webpageList.jsp" />
+		</action>
+		<action path="/snap" type="com.sohu.frontweb.query.action.SnapAction" parameter="method">
+			<forward name="list" path="/query/snapList.jsp" />
+		</action>
+		<action path="/query_webpage_wenda" type="com.sohu.frontweb.query.action.QueryWendaAction" parameter="method">
+			<forward name="list" path="/query/queryWendaList.jsp" />
+		</action>
+		<!-- 网页hint部分 -->
+		<action path="/hint_webpage" type="com.sohu.frontweb.webhint.action.WebhintAction" parameter="method">
+			<forward name="list" path="/webhint/webhintList.jsp" />
+		</action>
+        <action path="/hint_webpage_new" type="com.sohu.frontweb.webhint.action.WebhintNewAction" parameter="method">
+            <forward name="list" path="/webhint/webhintListNew.jsp" />
+        </action>
+		<action path="/hint_webpage_recom" type="com.sohu.frontweb.webhint.action.WebhintRecomAction" parameter="method">
+			<forward name="list" path="/webhint/webrecomhintList.jsp" />
+		</action>
+		<action path="/hint_check" type="com.sohu.frontweb.webhint.action.WebhintCheckAction" parameter="method">
+			<forward name="list" path="/webhint/webhintCheckList.jsp" />
+		</action>
+		<action path="/channel_check" type="com.sohu.frontweb.webhint.action.WebhintChannelAction" parameter="method">
+			<forward name="list" path="/webhint/webChannelCheckList.jsp" />
+		</action>
+		<!-- 网页vr部分 -->
+		<action path="/vr_webpage" type="com.sohu.frontweb.vr.action.VRAction" parameter="method">
+			<forward name="list" path="/vr/vrBlackList.jsp" />
+		</action>
+		<action path="/vr_white" type="com.sohu.frontweb.vr.action.VRWhiteAction" parameter="method">
+			<forward name="list" path="/vr/vrWhiteList.jsp" />
+		</action>
+		<!-- 信产部部分 -->
+		<action path="/secadmin_deploy" type="com.sohu.frontweb.secadmin.action.DeployAction" parameter="method"/>
+
+		<action path="/secadmin_blackip" type="com.sohu.frontweb.secadmin.action.BlackipAction" parameter="method">
+			<forward name="list" path="/secadmin/blackipList.jsp" />
+		</action>
+		<action path="/secadmin_blackurl" type="com.sohu.frontweb.secadmin.action.BlackurlAction" parameter="method">
+			<forward name="list" path="/secadmin/blackurlList.jsp" />
+		</action>
+		<action path="/secadmin_input" type="com.sohu.frontweb.secadmin.action.InputAction" parameter="method">
+			<forward name="list" path="/secadmin/inputList.jsp" />
+		</action>
+		<action path="/secadmin_output" type="com.sohu.frontweb.secadmin.action.OutputAction" parameter="method">
+			<forward name="list" path="/secadmin/outputList.jsp" />
+		</action>
+		<action path="/secadmin_url_set" type="com.sohu.frontweb.secadmin.action.Url_setAction" parameter="method">
+			<forward name="list" path="/secadmin/url_setList.jsp" />
+		</action>
+		<action path="/secadmin_whiteip" type="com.sohu.frontweb.secadmin.action.WhiteipAction" parameter="method">
+			<forward name="list" path="/secadmin/whiteipList.jsp" />
+		</action>
+		<action path="/secadmin_whiteurl" type="com.sohu.frontweb.secadmin.action.WhiteurlAction" parameter="method">
+			<forward name="list" path="/secadmin/whiteurlList.jsp" />
+		</action>
+		<!-- anchor黑名单 -->
+		<action path="/anchor" type="com.sohu.frontweb.anchor.action.AnchorAction" parameter="method">
+			<forward name="list" path="/anchor/anchorList.jsp" />
+		</action>
+		
+		<!-- 申请权限的发信模块 -->
+		<action path="/applynew" type="com.sohu.frontweb.apply.action.ApplyAction" parameter="method">
+			<forward name="inputpage" path="/apply.html" />
+		</action>		
+		<action path="/apply" type="com.sohu.frontweb.blacklist.util.ApplyAction" parameter="method">
+			<forward name="inputpage" path="/apply.html" />
+		</action>
+		<!-- 视频人工干预部分 -->
+		<action path="/videoUIS" type="com.sohu.frontweb.uis.video.action.VideoAction" parameter="method">
+			<forward name="list" path="/uis/video/recordList.jsp" />
+			<forward name="previewlist" path="/uis/video/previewList.jsp" />
+		</action>
+		<action path="/videoXml" type="com.sohu.frontweb.uis.video.action.XmlAction" parameter="method">
+		</action>		
+		<!-- 图片人工干预部分 -->
+		<action path="/picUIS" type="com.sohu.frontweb.uis.pic.action.PicAction" parameter="method">
+			<forward name="list" path="/uis/pic/recordList.jsp" />
+			<forward name="previewlist" path="/uis/pic/previewList.jsp" />
+		</action>
+		<!-- 网页人工干预部分 -->
+		<action path="/webUIS" type="com.sohu.frontweb.uis.web.action.WebAction" parameter="method">
+			<forward name="list" path="/uis/web/aladdinValidator.jsp" />
+			<forward name="webfrlist" path="/uis/web/WebFixrankList.jsp" />
+		</action>
+		<!-- 明医固排 -->
+		<action path="/mingyi_fixrank" type="com.sohu.frontweb.mingyi.action.MingyiFixrankAction" parameter="method">
+			<forward name="list" path="/uis/web/aladdinValidator.jsp" />
+			<forward name="fixrank" path="/mingyi/MingyiFixrankList.jsp" />
+		</action>
+		<!-- 明医query黑名单 -->
+		<action path="/mingyi_blacklist" type="com.sohu.frontweb.mingyi.action.MingyiBlackListAction" parameter="method">
+			<forward name="list" path="/mingyi/MingyiBlackList.jsp" />
+		</action>
+
+		<!-- 网页快照人工干预部分 -->
+		<action path="/webSnap" type="com.sohu.frontweb.uis.web.action.WebSnapAction" parameter="method">
+			<forward name="list" path="/uis/web/WebSnapFixList.jsp" />
+		</action>
+						
+		<!-- 通用黑名单 -->
+		<action path="/ubs" type="com.sohu.frontweb.ubs.action.BlacklistAction" parameter="method">
+			<forward name="list" path="/ubs/index.jsp" />
+		</action>		
+		
+		<!-- 数据开放平台 -->
+		<action path="/open" type="com.sohu.frontweb.vropen.action.OpenAction" parameter="method">
+			<forward name="reslist" path="/vropen/vrRes.jsp" />
+			<forward name="datalist" path="/vropen/vrData.jsp" />
+		</action>	
+	
+		
+		<!-- 流量查询平台 -->
+		<action path="/flow" type="com.sohu.frontweb.flow.action.FlowAction" parameter="method">
+		</action>		
+
+		<!-- 流量查询平台 -->
+		<action path="/uigs" type="com.sohu.frontweb.uigs.action.UigsAction" parameter="method">
+		</action>	
+		
+		<!-- apollo -->
+		<action path="/apollo" type="com.sohu.frontweb.apollo.action.ApolloAction" parameter="method">
+			<forward name="basic" path="/apollo/basic.jsp" />
+			<forward name="trend" path="/apollo/trend.jsp" />
+			<forward name="flow" path="/apollo/flow.jsp" />
+		</action>			
+	
+		<!--  合作方 -->
+		<action path="/cooperation" type="com.sohu.frontweb.cooperation.action.CooperationAction" parameter="method">
+			<forward name="list" path="/cooperation/index.jsp" />
+		</action>		
+		
+	</action-mappings>	
+</struts-config>
+
