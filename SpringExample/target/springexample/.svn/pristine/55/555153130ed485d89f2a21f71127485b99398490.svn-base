@@ -1,0 +1,33 @@
+<%@ page language="java" pageEncoding="GBK" contentType="text/html; charset=gb2312" session="false"%>
+<%@ page import="
+        com.sohu.frontweb.ubs.opadmin.Parser,
+        com.sohu.frontweb.ubs.opadmin.TextParser,
+        com.sohu.frontweb.ubs.opadmin.JSONParser,
+        com.sohu.frontweb.ubs.opadmin.DBOperateUtil,
+        java.util.ArrayList,
+        com.sohu.frontweb.ubs.opadmin.XMLParser;
+"%>
+<%
+String remoteIp = request.getRemoteAddr();
+if(!remoteIp.equals("10.129.36.62")){
+    out.println("do not have right to do this.");
+    return;
+}
+out.println("ok.");
+
+String postString = request.getParameter("postdata");
+String table = request.getParameter("table");
+ArrayList<String>columns = new ArrayList<String>();
+Parser parser = null;
+String dataType = request.getParameter("type");
+if(dataType.equals("text")){
+    parser = new TextParser(postString);
+}else if(dataType.equals("xml")){
+    parser = new XMLParser(columns,postString);
+}else{
+    parser = new JSONParser(columns,postString);
+}
+
+ArrayList<ArrayList<String>> result =parser.parser();
+DBOperateUtil.insertToDb(table,columns,result);
+%>

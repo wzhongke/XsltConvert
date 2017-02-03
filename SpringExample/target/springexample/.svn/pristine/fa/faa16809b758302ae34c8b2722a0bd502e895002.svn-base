@@ -1,0 +1,968 @@
+<%@ page language="java" contentType="text/html; charset=GBK"
+    pageEncoding="GBK"%>
+<%@ page import="java.sql.Timestamp,java.util.Date,java.text.SimpleDateFormat,com.sohu.frontweb.base.action.UmisAction"%>
+
+<%
+    SimpleDateFormat sdformat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    Timestamp timestamp = new Timestamp(new Date().getTime());
+   String currentTime =  sdformat.format(timestamp);
+%>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=GBK">
+	<title>域名表记录列表</title>
+</head>
+<script type="text/javascript">
+	Ext.namespace('Ext.exampledata');
+	Ext.exampledata.matchrule_list = [
+ 		['2','2级:模糊文字匹配', 'The Heart of Dixie'],
+        ['3','3级:精确文字匹配', 'The Land of the Midnight Sun']
+     ];
+     
+    Ext.exampledata.encombox_list = [
+		['0','不屏蔽', 'The Heart of Dixie'],
+	    ['1','条件词封禁', 'The Land of the Midnight Sun'],
+	    ['2','结果词封禁', 'The Land of the Midnight Sun'],
+	    ['3','两者都屏蔽', 'The Land of the Midnight Sun']
+	 ]; 
+    
+ 
+     
+	Ext.onReady(function(){
+		var exportConditionUrl = 'hint_webpage_recom.do?method=exportRecord';
+		//创建新增或单独修改表记录信息的form表单
+		Ext.QuickTips.init();
+		Ext.form.Field.prototype.msgTarget = 'side';//统一指定错误信息提示方式
+
+
+		var exportConditionUrl = 'hint_webpage_recom.do?method=getRecordList';
+
+
+		
+		//定义数据集对象
+		var store = new Ext.data.Store({//配置分组数据集
+			reader: new Ext.data.XmlReader({
+				totalRecords: "results",
+				record: "WebhintRecomRecord",
+				id: "id"
+			},
+			Ext.data.Record.create([
+				{name: 'id'},			
+				{name: 'queryword'},
+				{name: 'status'},
+				{name: 'user'},
+				{name: 'create_time',type:'date', dateFormat: 'Y-m-d H:i:s'},
+				{name: 'modify_time',type:'date', dateFormat: 'Y-m-d H:i:s'}
+			])
+			),
+			proxy : new Ext.data.HttpProxy({
+				url : 'hint_webpage_recom.do?method=getRecordList'
+			}),
+			sortInfo: {field: 'modify_time', direction: 'DESC'},
+	  		remoteSort: true
+		})
+		var pageSize = 100;
+		
+		<%//根据权限信息显示工具栏
+		StringBuffer toolbar_str = new StringBuffer();
+    	toolbar_str.append("{text : '新增',iconCls:'add',handler : showAdd},");
+    	toolbar_str.append("{text : '批量审核',iconCls:'option',handler : showBatchCheck},");
+    	toolbar_str.append("{text : 'url查询',iconCls:'option',handler : showUrl},");
+	    toolbar_str.deleteCharAt(toolbar_str.length()-1);
+	    %>
+		//创建工具栏组件
+		var toolbar = new Ext.Toolbar([
+		    <%=toolbar_str.toString()%>
+		]);
+    	
+    	//创建分页工具栏
+    	var pagingBar = new Ext.PagingToolbar({
+	        pageSize: pageSize,
+	        store: store,
+	        displayInfo: true,
+	        displayMsg: '显示 {0} - {1} , 共 {2} 条记录',
+	        emptyMsg: "没有任何记录",
+	        items:[{text : '导出',iconCls:'option',handler : exportExcel}]
+    	});
+		//创建Grid表格组件
+		var cb = new Ext.grid.CheckboxSelectionModel();
+		//创建过滤器
+		var filters = new Ext.grid.GridFilters({
+		  filters:[
+		    {type: 'numeric',  dataIndex: 'id'},
+		    {type: 'string',  dataIndex: 'url'},
+		    {type: 'boolean', dataIndex: 'tag_block'},
+		    {type: 'boolean', dataIndex: 'tag_reversible'},
+		    {
+		      type: 'list',  
+		      dataIndex: 'extra_attr', 
+		      options: ['无价值', '死链', '非中文'],
+		      phpMode: true
+		    },
+		    {type: 'string',  dataIndex: 'user'},
+		    {type: 'date',  dataIndex: 'sub_date'},
+		    {type: 'string',  dataIndex: 'info'}
+		]});
+
+		function statusRenderer(val){
+	        if(val == 1){
+	            return '未审核';
+	        }else if(val == 0){
+	            return '异常';
+	        }else if(val==2){
+	            return "正常";
+	        }else
+		        return '无';
+    	}
+
+		//开始查询表单部分
+		var dr = new Ext.FormPanel({
+	    	labelWidth: 125,
+	        frame: true,
+	  	  	bodyStyle:'padding:5px 5px 0',
+	  	  	width: 960,
+	  	  	labelAlign: 'left',
+	        defaults: {width: 275},
+	      	//增加表单键盘事件
+	        keys:[
+	         {
+	             key: [10,13],
+	             fn:query
+	         } ],
+	         items: [{
+		        	xtype:'textfield',
+					width : 400,
+					id : 'query_keyword',
+					name : 'query_keyword',
+					fieldLabel:'推荐词'
+		        },{
+                    xtype:'radiogroup',
+                    fieldLabel:'查找方式',
+                    labelSeparator:':',
+                    columns:2,
+                    width:300,
+                    items:[
+                           {boxLabel:'精确查找',name:'query_keyword_matchType',inputValue:1,checked:true,border:false},
+                           {boxLabel:'模糊查找',name:'query_keyword_matchType',inputValue:0,border:false}
+                    ]                   
+                },{
+                    xtype:'textfield',
+                    width : 400,
+                    id : 'sub_user',
+                    name : 'sub_user',
+                    fieldLabel:'提交人'
+                },
+//                {
+//                    xtype:'radiogroup',
+//                    fieldLabel:'查找方式',
+//                    labelSeparator:':',
+//                    columns:2,
+//                    width:300,
+//                    items:[
+//                           {boxLabel:'精确查找',name:'sub_user_matchType',inputValue:1,checked:true,border:false},
+//                           {boxLabel:'模糊查找',name:'sub_user_matchType',inputValue:0,border:false}
+//                    ]                   
+//                },
+                {
+                    xtype: 'combo',
+                    fieldLabel: '状态',
+                    hiddenName: 'status',
+                    store: new Ext.data.SimpleStore({
+                        fields: ['value', 'text'],
+                        data: [
+                            [-1,'all'],
+                            [0, '异常'],
+                            [1, '未审核'],
+                            [2, '正常']
+                        ]
+                    }),
+                    displayField: 'text',
+                    valueField: 'value',
+                    mode: 'local',
+                    triggerAction: 'all',
+                    value: 1 
+		        },{
+	                layout:'column',
+	                width : 620,
+	                border:false,
+	                hidden:false,
+	                items:[
+	                    {
+	                        columnWidth:.5,
+	                        layout: 'form',
+	                        border:false,
+	                        items: [{
+	                            xtype:'textfield',
+	                            id : 'query_modify_time_1',
+	                            name : 'query_modify_time_1',
+	                            fieldLabel:'修改时间',
+	                            cls:'Wdate'
+	                        }]
+	                    },
+	                    {
+	                        columnWidth:.5,
+	                        layout: 'form',
+	                        border:false,
+	                        items: [{
+	                            xtype:'textfield',
+	                            id : 'query_modify_time_2',
+	                            name : 'query_modify_time_2',
+	                            fieldLabel:'到',
+	                            cls:'Wdate'
+	                        }]
+	                    }
+	                  ]
+	                }],
+			buttons:[
+				{
+					text : '查询',
+					handler : function(){
+						query(true);
+					}
+				},
+				{
+					text : '返回',
+					handler : function(){
+						query(false);
+					}
+				}
+			]
+	      });
+
+		var recordGrid = new Ext.grid.GridPanel({
+			applyTo : 'grid-div',
+			tbar : toolbar,
+			frame:true,
+			loadMask: true,
+			//plugins: filters,
+			autoScroll: true,
+			autoWidth:true,
+			//width: 960,
+			store: store,
+			viewConfig : {
+				autoFill : true
+			},
+			sm : cb,
+			columns: [//配置表格列
+				new Ext.grid.RowNumberer({
+					header : '行号',
+					width : 40
+				}),//表格行号组件
+				cb,
+				{header: "编号", width: 30, dataIndex: 'id', sortable: true},
+				{header: "推荐词", width: 80, dataIndex: 'queryword', sortable: true},
+				{header: "状态", width: 20, dataIndex: 'status', renderer: statusRenderer, sortable: true},
+				{header: "提交人", width: 40, dataIndex: 'user', rsortable: true},
+				{header: "创建时间", width: 50, dataIndex: 'create_time', renderer: Ext.util.Format.dateRenderer('Y-m-d H:i:s'), sortable: true},
+				{header: "修改时间", width: 50, dataIndex: 'modify_time', renderer: Ext.util.Format.dateRenderer('Y-m-d H:i:s'), sortable: true}			
+			],
+	        // paging bar on the bottom
+	        bbar: pagingBar			
+		});
+		// trigger the data store load
+    	store.load({params:{start:0, limit:pageSize}});
+		
+
+    	var inputForm = new Ext.FormPanel({
+			labelSeparator : ":",
+			frame:true,
+			border:false,
+			autoHeight: true,
+			id : 'inputform',
+			items : [
+				{
+					xtype:'textfield',
+					id:'queryword',
+					name : 'queryword',
+					fieldLabel:'<font color=red>*</font>推荐词</font>',
+					allowBlank : false
+				},{
+                	xtype: 'combo',
+                    fieldLabel: '<font color=red>*</font>推荐词状态:',
+                    hiddenName: 'status',
+                    store: new Ext.data.SimpleStore({
+                		fields: ['value', 'text'],
+                		data: [
+                			[0, '异常'],   
+                			[1, '正常']
+                		]
+                	}),
+                    displayField: 'text',
+                    valueField: 'value',
+                    mode: 'local',
+                    triggerAction: 'all',
+                    value: 0       
+                },{
+					xtype:'hidden',
+					name : 'id'
+				}
+			],
+			buttons:[
+				{
+					text : '提交',
+					handler : submitForm
+				},
+				{
+					text : '关闭',
+					handler : function(){
+						win.hide();
+					}
+				}
+			]
+		});
+    	
+    	var batchCheck = new Ext.FormPanel({
+            labelSeparator : ":",
+            frame:true,
+            border:false,
+            autoHeight: true,
+            id : 'batchCheck',
+            items : [
+                {
+                    xtype: 'combo',
+                    fieldLabel: '<font color=red>*</font>推荐词状态',
+                    hiddenName: 'status',
+                    store: new Ext.data.SimpleStore({
+                        fields: ['value', 'text'],
+                        data: [
+                            [0, '异常'], 
+                            [1, '未审核'],
+                            [2, '正常']
+                        ]
+                    }),
+                    displayField: 'text',
+                    valueField: 'value',
+                    mode: 'local',
+                    triggerAction: 'all',
+                    value: 0       
+                },{
+                    xtype:'hidden',
+                    id:"checkids",
+                    name : 'checkids'
+                }
+            ],
+            buttons:[
+                {
+                    text : '提交',
+                    handler : docheck
+                },
+                {
+                    text : '关闭',
+                    handler : function(){
+                        wincheck.hide();
+                    }
+                }
+            ]
+        });
+    	
+    	//创建工具栏组件
+        var popupToolbar = new Ext.Toolbar([
+            {text : '下线',iconCls:'option',handler : showConfirm},
+            {text : '返回',iconCls:'batch-remove',handler : function (){
+                popupWin.hide();
+                store.load({params:{start:0, limit:50}});
+                }}
+        ]);
+    	//定义分组数据集对象
+        var popupStore = new Ext.data.Store({//配置分组数据集
+            reader: new Ext.data.JsonReader({
+                totalProperty: "results",
+                root: "items",
+                id: "id"
+            },
+            Ext.data.Record.create([
+                {name: 'id'},                    
+                {name: 'queryword'},
+                {name: 'type'},
+                {name: 'url'},
+                {name: 'title'},
+                
+                {name: 'content'},
+                {name: 'queryList'},
+                {name:'user'}
+            ])
+            ),
+            sortInfo: {field: 'queryword', direction: 'DESC'}
+        });
+      
+        //创建Grid表格组件
+        var popupCb = new Ext.grid.CheckboxSelectionModel();
+        
+        /*为弹出选择窗口准备的grid*/
+        var popupGrid = new Ext.grid.GridPanel({
+            autoHeight: true,
+            tbar : popupToolbar,
+            frame:true,
+            loadMask: true,
+            store: popupStore,
+            viewConfig : {
+                autoFill : true
+            },
+            sm : popupCb,
+            columns: [//配置表格列
+                popupCb,
+                {header: "查询词", width: 100, dataIndex: 'queryword'},
+                {header: "url", width: 130, renderer:urlRenderer,dataIndex: 'url'},
+                {header: "标题", width: 100, dataIndex: 'title'},
+                {header: "内容", width: 60, dataIndex: 'content'},
+                {header: "来源", width: 100, dataIndex: 'type'},
+                {header: "推荐词", width: 100, dataIndex: 'queryList'}
+                ]
+        });
+
+
+		//删除原有窗口对象
+		win = Ext.getCmp('input_window');
+		if(win){
+			win.destroy();
+		}
+		//创建弹出窗口
+		var win = new Ext.Window({
+			id: 'input_window',
+			layout:'fit',
+		    width:480,
+		    closeAction:'hide',
+			resizable : false,
+			shadow : true,
+			modal :true,
+		    closable:true,
+		    bodyStyle:'padding:5 5 5 5',
+		    animCollapse:true,
+			items:[inputForm]
+		});
+		win.width = 480;
+		
+		wincheck = Ext.getCmp('check_window');
+        if(wincheck){
+            wincheck.destroy();
+        }
+        //创建弹出窗口
+        var wincheck = new Ext.Window({
+            id: 'check_window',
+            layout:'fit',
+            width:480,
+            closeAction:'hide',
+            resizable : false,
+            shadow : true,
+            modal :true,
+            closable:true,
+            bodyStyle:'padding:5 5 5 5',
+            animCollapse:true,
+            items:[batchCheck]
+        });
+        wincheck.width = 480;
+        
+        
+      //创建显示grid的弹出窗口
+        var popupWin = new Ext.Window({
+            maximizable : true,
+            y: 50,
+            autoScroll: true,
+            layout:'fit',
+            //height  : 500,
+            width:1000,
+            closeAction:'hide',
+            resizable : false,
+            shadow : true,
+            modal :true,
+            closable:true,
+            bodyStyle:'padding:5 5 5 5',
+            animCollapse:true,
+            items:[popupGrid]
+        });
+        popupWin.width = 1000;
+        
+        
+      //取得所选域名记录信息
+        function getCheckedContentList(){
+            var recs = popupGrid.getSelectionModel().getSelections();
+            var list = [];
+            if(recs.length == 0){
+                Ext.MessageBox.alert('提示','请选择要进行操作的记录！');
+            }else{
+                for(var i = 0 ; i < recs.length ; i++){
+                    var rec = recs[i];
+                    var tmpArray = [];
+                    //tmpArray.push(rec.get('id'));
+                    
+                    tmpArray.push(rec.get('queryword'));
+                    tmpArray.push(rec.get('url'));
+                    tmpArray.push(rec.get('title'));
+                    
+                    tmpArray.push(rec.get('content'));
+                    tmpArray.push(rec.get('queryList'));
+                    tmpArray.push(rec.get("type"));
+                    list.push(tmpArray);
+                }
+            }
+            return list;
+        }
+        
+        //显示批量覆盖确认网页前台限制词记录对话框
+        function showConfirm(){
+            //二维数组：元素的格式是5个字段：id，confirm_tag_block，confirm_tag_reversible，confirm_reserve_id_str，confirm_extra_attr
+            var recordIdList = getCheckedContentList();
+            var num = recordIdList.length;
+            var param = '';
+            if(num == 0){
+                return;
+            }
+            for(var i=0;i<num;i++){
+                var tmpobj = recordIdList[i];
+                param = param + tmpobj.join("{[||]}") + '-=-';
+            }
+            Ext.MessageBox.confirm("提示","您确定要下线所选记录吗？",function(btnId){
+                if(btnId == 'yes')
+                    doConfirmRecord( param );
+            });
+            
+        }
+      //覆盖网页前台限制词记录,param的格式：3685746,1,0,,无价值-=-3685745,1,0,,普通-=-
+        function doConfirmRecord(param){
+            var msgTip = Ext.MessageBox.show({
+                title:'提示',
+                width : 250,
+                msg:'正在往推荐词表同步数据请稍后......'
+            });
+            Ext.Ajax.request({
+                url : 'hint_webpage_recom.do?method=confirmHintRecom',
+                params : {confirmParam : param },
+                method : 'POST',
+                success : function(response,options){
+                    msgTip.hide();
+                    //var jsonResult = Ext.util.JSON.decode(response.responseText);
+                    Ext.Msg.alert('提示','批量下线推荐词成功。');
+                    popupWin.hide();
+                    //重新加载主列表中数据
+                    store.load({params:{start:0, limit:50}});
+                    /*
+                    var result = Ext.util.JSON.decode(response.responseText);
+                    if(result.success){
+                        //服务器端数据成功删除后，同步删除客户端列表中的数据
+                        store.load({params:{start:0, limit:50}});
+                        Ext.Msg.alert('提示','删除网页前台限制词记录信息成功。');
+                    }else{
+                        Ext.Msg.alert('提示','该网页前台限制词记录已包含'+result.num+'本书籍信息不能删除！');
+                    }*/
+                },
+                failure : function(response,options){
+                    msgTip.hide();
+                    Ext.Msg.alert('提示','批量下线推荐词失败！');
+                }
+            });
+        }
+        
+		//win.height = 350;
+
+		//显示新建域名表记录窗口
+		function showAdd(){
+			inputForm.form.reset();
+			inputForm.isAdd = true;
+			win.setTitle("新增记录信息");
+			win.show();
+			bindingKeyDown();
+			bindingPicker();
+		}
+		//展示批量状态修改
+		function showBatchCheck(){
+		    var recordList = getCheckedIdList();
+            var num = recordList.length;
+            if(num <1){
+                Ext.MessageBox.alert("提示","请选择要修改的记录。");
+            }else{ 
+                
+                wincheck.setTitle("审核状态");
+                wincheck.show();
+                var ids = recordList.join(",");
+                $("#checkids").val(ids);
+            }
+		}
+		
+		function showUrl(){
+		    var recordList = getCheckedIdList();
+            var num = recordList.length;
+            if(num>0){
+                var msgTip = Ext.MessageBox.show({
+                    title:'提示',
+                    width : 250,
+                    msg:'正在查询全网URL信息......'
+                });
+                
+    		    Ext.Ajax.request({
+                    url : 'hint_webpage_recom.do?method=queryUrl',
+                    params : {recordList : recordList.join(",")},
+                    method : 'POST',
+                    success : function(response,options){
+                        msgTip.hide();
+                        var result = Ext.util.JSON.decode(response.responseText);
+                        if(result.success){
+                            //执行成功之后显示出查询得到的url数据
+                            var popupData = null;
+                            eval("popupData="+result.data);
+                            var num = result.num;
+                            if(num>0){
+                                popupStore.loadData(popupData);
+                                popupWin.setTitle("url查询结果");
+                                popupWin.show();
+                            }else{
+                                Ext.Msg.alert('提示','查询无结果');
+                            }
+                        }else{
+                            Ext.Msg.alert('提示','查询出错');
+                        }
+                    },
+                    failure : function(response,options){
+                        msgTip.hide();
+                        Ext.Msg.alert('提示','url查询请求失败！');
+                    }
+                });
+            }else{
+                Ext.Msg.alert('提示','请至少选择一个推荐词');
+            }
+		}
+		
+		function urlRenderer(val){
+		    return "<a href=\""+val+"\" target=_blank>"+val+"</a>";
+		}
+		function docheck(){
+		    if(confirm("确认统一修改推荐词的状态么?")){
+		        batchCheck.form.submit({
+                    clientValidation:true,//进行客户端验证
+                    waitMsg : '正在提交数据请稍后',//提示信息
+                    waitTitle : '提示',//标题
+                    url : 'hint_webpage_recom.do?method=batchCheck',//请求的url地址
+                    method:'POST',//请求方式
+                    success:function(form,action){//加载成功的处理函数
+                        wincheck.hide();
+                        Ext.MessageBox.show({
+                           title: '提示',
+                           msg: '批量修改成功' , 
+                           buttons: Ext.MessageBox.OK,
+                           icon: Ext.MessageBox.INFO
+                        });
+                        store.load({params:{start:0, limit:pageSize}});
+                    },
+                    failure:function(form,action){//加载失败的处理函数
+                        win.hide();
+                        var failcause = action.result.cause;
+                        Ext.MessageBox.show({
+                           title: '提示',
+                           msg: '新增查询词表记录失败。原因是:<br>'+failcause,
+                           buttons: Ext.MessageBox.OK,
+                           icon: Ext.MessageBox.ERROR
+                        });
+                    }
+                });
+		    }
+		}
+		
+		//显示修改域名表记录窗口
+		function showModify(){
+			var recordList = getCheckedIdList();
+			var num = recordList.length;
+			if(num > 1){
+				Ext.MessageBox.alert("提示","每次只能修改一条记录信息。");
+			}else if(num == 1){
+				inputForm.isAdd = false;
+				win.setTitle("修改记录信息");
+				win.show();
+				bindingKeyDown();
+				bindingPicker();
+				var recordId = recordList[0];
+				loadForm(recordId);
+			}
+		}
+		function bindingPicker(){
+		    Ext.each(Ext.query(".Wdate"),function(that){
+	            that.onclick=function(){WdatePicker({skin:'ext',dateFmt:'yyyy-MM-dd HH:mm:ss'});}
+	        });
+		}
+    	  function stopEvent(evt){
+    	        evt = evt||window.event;  
+    	        if(evt.stopPropagation)
+    	            evt.stopPropagation();
+    	        if(evt.preventDefault)
+    	            evt.preventDefault();
+    	        evt.cancelBubble = true;
+    	        evt.cancel = true;
+    	        evt.returnValue = false;
+    	        return false;
+    	    }
+		function getKeycode(evt){
+		    evt=evt||window.event;
+		    var keycode=evt.which||evt.keyCode;
+		    return keycode;
+		}
+		function insertAtCursor(myField, myValue)
+		{  
+	        if (document.selection)
+	        {  
+	            myField.focus();
+	            sel = document.selection.createRange();  
+	            sel.text = myValue;  
+	        }
+	        else if (myField.selectionStart || myField.selectionStart == "0")
+	        {  
+	            var startPos = myField.selectionStart;
+	            var endPos = myField.selectionEnd;
+	            myField.value = myField.value.substring(0, startPos) + myValue + myField.value.substring(endPos, myField.value.length);
+	            myField.selectionEnd = startPos+'\t'.length;
+	        }
+	        else
+	        {  
+	            myField.value += myValue;  
+	        }
+		}
+		function bindingKeyDown(){	    
+		    Ext.each(Ext.query(".tabclass"),function(item){
+		        item.onkeydown=function(evt){
+		            var keycode = getKeycode(evt);
+	                if(keycode==9){
+	                    stopEvent(evt);
+	                    insertAtCursor(item,'\t');
+	                }
+		        }
+		    });
+		}
+		//加载表单数据
+		function loadForm(recordId){
+			inputForm.form.load({
+				waitMsg : '正在加载数据请稍后',//提示信息
+				waitTitle : '提示',//标题
+				url : 'hint_webpage_recom.do?method=getRecordById',//请求的url地址
+				params : {recordId : recordId},
+				method:'GET',//请求方式
+				success:function(form,action){//加载成功的处理函数
+				},
+				failure:function(form,action){//加载失败的处理函数
+					Ext.Msg.alert('提示','数据加载失败');
+				}
+			});
+		}
+		//显示删除域名表记录对话框
+		function showDelete(){
+			var recordIdList = getCheckedIdList();
+			var num = recordIdList.length;
+			if(num == 0){
+				return;
+			}
+			Ext.MessageBox.confirm("提示","您确定要删除所选记录吗？",function(btnId){
+				if(btnId == 'yes')
+					deleteRecord(recordIdList);
+			})
+		}
+		//删除域名表记录
+		function deleteRecord(recordIdList){
+			var msgTip = Ext.MessageBox.show({
+				title:'提示',
+				width : 250,
+				msg:'正在删除查询词记录信息请稍后......'
+			});
+			Ext.Ajax.request({
+				url : 'hint_webpage_recom.do?method=deleteRecord',
+				params : {recordIdList : recordIdList.toString()},
+				method : 'POST',
+				success : function(response,options){
+					msgTip.hide();
+					var result = Ext.util.JSON.decode(response.responseText);
+					if(result.success){
+						//服务器端数据成功删除后，同步删除客户端列表中的数据
+						store.load({params:{start:0, limit:pageSize}});
+						Ext.Msg.alert('提示','删除查询词记录信息成功。');
+					}else{
+						Ext.Msg.alert('提示','该查询词记录已包含'+result.num+'本书籍信息不能删除！');
+					}
+				},
+				failure : function(response,options){
+					msgTip.hide();
+					Ext.Msg.alert('提示','删除查询词表记录请求失败！');
+				}
+			});
+		}
+		function checkLength(id){
+		    var word=document.getElementById(id).value;
+		    word=word.replace(/(^\s*)|(\s*$)/g, "");
+		    if(word.length==0)return false;
+		    return true;
+		}
+		
+		function checkEnsugg(){
+		    var suggType = document.getElementById("suggType").value;
+		    if(suggType=="条件词封禁"){
+		        if(!checkLength("condword"))return 1;
+		    }
+		    if(suggType=="结果词封禁"){
+		        if(!checkLength("keyword"))return 2;
+		    }
+		    if(suggType=="两者都屏蔽"){
+		        
+                if(!checkLength("condword")||!checkLength("keyword"))return 3;
+		    }
+		    return 0;
+		}
+		//提交表单数据
+		function submitForm(){
+			//判断当前执行的提交操作，isAdd为true表示执行域名表记录新增操作，false表示执行域名表记录修改操作
+			if( inputForm.form.isValid() ){
+				if(inputForm.isAdd){
+					//新增域名表记录信息
+					inputForm.form.submit({
+						clientValidation:true,//进行客户端验证
+						waitMsg : '正在提交数据请稍后',//提示信息
+						waitTitle : '提示',//标题
+						url : 'hint_webpage_recom.do?method=addRecord',//请求的url地址
+						method:'POST',//请求方式
+						success:function(form,action){//加载成功的处理函数
+							win.hide();
+							var failcause = action.result.cause;
+							Ext.MessageBox.show({
+					           title: '提示',
+					           msg: '完成新增查询词表记录操作。<br><br><br>' + failcause , 
+					           buttons: Ext.MessageBox.OK,
+					           icon: Ext.MessageBox.INFO
+					        });
+							store.load({params:{start:0, limit:pageSize}});
+						},
+						failure:function(form,action){//加载失败的处理函数
+							win.hide();
+							var failcause = action.result.cause;
+							Ext.MessageBox.show({
+					           title: '提示',
+					           msg: '新增查询词表记录失败。原因是:<br>'+failcause,
+					           buttons: Ext.MessageBox.OK,
+					           icon: Ext.MessageBox.ERROR
+					        });
+						}
+					});
+				}else{
+					//修改域名表记录信息
+					inputForm.form.submit({
+						clientValidation:true,//进行客户端验证
+						waitMsg : '正在提交数据请稍后',//提示信息
+						waitTitle : '提示',//标题
+						url : 'hint_webpage_recom.do?method=modifyRecord',//请求的url地址
+						method:'POST',//请求方式
+						success:function(form,action){//加载成功的处理函数
+							win.hide();
+							Ext.Msg.alert('提示','修改查询词表记录成功');
+							store.load({params:{start:0, limit:pageSize}});
+						},
+						failure:function(form,action){//加载失败的处理函数
+							var failcause = action.result.cause;
+							win.hide();
+							Ext.MessageBox.show({
+					           title: '提示',
+					           msg: '修改查询词表记录失败。原因是:<br>'+failcause,
+					           buttons: Ext.MessageBox.OK,
+					           icon: Ext.MessageBox.ERROR
+					        });
+						}
+					});
+				}
+			}//if( inputForm.form.isValid() )
+		}
+		//取得所选域名记录信息
+		function getCheckedIdList(){
+			var recs = recordGrid.getSelectionModel().getSelections();
+			var list = [];
+			if(recs.length == 0){
+				Ext.MessageBox.alert('提示','请选择要进行操作的记录！');
+			}else{
+				for(var i = 0 ; i < recs.length ; i++){
+					var rec = recs[i];
+					list.push(rec.get('id'));
+				}
+			}
+			return list;
+		}
+
+		//导出Excel
+		function exportExcel(){
+			var msgTip = Ext.MessageBox.show({
+				title:'提示',
+				width : 250,
+				msg:'抱歉，暂时不支持导出......'
+			});
+//			Ext.Ajax.request({
+//				url : 'hint_webpage_recom.do?method=exportRecord',
+//				params : {storeUrl : Ext.util.JSON.encode(exportConditionUrl) },
+//				method : 'POST',
+//				success : function(response,options){
+//					msgTip.hide();
+//					window.location = '<%=request.getContextPath()%>/exportExcel/blacklist_hint.xls';
+//					var result = Ext.util.JSON.decode(response.responseText);
+//				},
+//				failure : function(response,options){
+//					msgTip.hide();
+//					Ext.Msg.alert('提示','导出网页hint记录请求失败！');
+//				}
+//			});
+			
+		}
+		//将 是否封禁首页和是否留首封站 的代码解析成 文本
+		function booleantag(val){
+	        if(val == 1){
+	            return '是';
+	        }else if(val == 0){
+	            return '否';
+	        }else
+		        return '';
+    	}
+		//开始查询代码
+		function query(tag){
+			//新增域名表记录信息
+			var query_keyword ;
+			if(tag)
+				query_keyword = document.getElementById("query_keyword").value;
+			else{
+				query_keyword = '';
+				document.getElementById("query_keyword").value='';
+			}
+
+			var query_keyword_matchType;
+			if(document.getElementsByName("query_keyword_matchType")[0].checked)
+			    query_keyword_matchType = 1;
+			else
+			    query_keyword_matchType = 0;
+
+			var sub_user = document.getElementById("sub_user").value;
+//			var sub_user_matchType;
+//            if(document.getElementsByName("sub_user_matchType")[0].checked)
+//                sub_user_matchType = 1;
+//            else
+//                sub_user_matchType = 0;
+            
+            var status = $("#status").val();
+            if(status=="")status = -1;
+			var modify_1 = $("#query_modify_time_1").val();
+			var modify_2 = $("#query_modify_time_2").val();
+			
+			var url = "hint_webpage_recom.do?";
+			var param = [];
+			param.push("method=getRecordList");
+			param.push("query_keyword="+escape(query_keyword));
+			param.push("query_keyword_matchType="+query_keyword_matchType);
+			param.push("sub_user="+sub_user);
+			param.push("status="+status);
+			param.push("modify_1="+modify_1);
+			param.push("modify_2="+modify_2);
+			url+=param.join("&");
+			
+			//导出条件
+			exportConditionUrl = "hint_webpage_recom.do?method=getRecordList&query_keyword="+escape(query_keyword)+"&query_keyword_matchType="+query_keyword_matchType+ "&sub_user=" + escape(sub_user) ;
+			
+			store.proxy.conn.url = url;
+			store.load({params:{start:0, limit:18}});
+		}
+		
+	    dr.render('dr');
+	    bindingPicker();
+	  	
+	});
+</script>
+<body>
+<div id="dr" style="width:100%;height:28%;"></div>
+<!--div id="progress-div" style="width:100%;height:4%;display:none"></div-->
+<div id='grid-div' style="width:100%; height:61%;"></div>
+</body>
+</html>

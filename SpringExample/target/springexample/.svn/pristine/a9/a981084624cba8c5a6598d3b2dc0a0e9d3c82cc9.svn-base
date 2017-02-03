@@ -1,0 +1,164 @@
+<%@ page language="java" contentType="text/html; charset=GBK"
+    pageEncoding="GBK"%>
+
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=GBK">
+	<title>域名表记录列表1</title>
+	
+</head>
+<script type="text/javascript">
+	Ext.namespace('Ext.exampledata');
+	Ext.exampledata.templateid_list = [
+		['1', '2列表格', 'The Grand Canyon State'],
+		['2', '2列表格加居左扩展链接', 'The Grand Canyon State'],
+		['3', '2列表格加摘要加居左扩展链接', 'The Grand Canyon State'],
+        ['4', '2列表格加居右扩展链接', 'The Grand Canyon State'],
+        
+        ['5', '2列表格加摘要加居右扩展链接', 'The Grand Canyon State'],
+        ['6', '3列表格', 'The Grand Canyon State'],
+        ['7', '3列表格加居左扩展链接', 'The Grand Canyon State'],
+        ['8', '3列表格加摘要加居左扩展链接', 'The Grand Canyon State'],
+        
+        ['9', '3列表格加居右扩展链接', 'The Grand Canyon State'],
+        ['10', '3列表格加摘要加居右扩展链接', 'The Grand Canyon State'],
+        ['11', '三段三行摘要加扩展链接模板', 'The Grand Canyon State'],
+        ['12', '三段三行摘要模板', 'The Grand Canyon State'],
+        
+        ['13', '一段三行摘要加扩展链接模板', 'The Grand Canyon State'],
+        ['14', '一段三行摘要模板', 'The Grand Canyon State'],
+        ['15', '一段一行加多行扩展链接模板', 'The Grand Canyon State'],
+        ['16', '一段一行加扩展链接', 'The Grand Canyon State'],
+        
+        ['17', '一段三行加图片', 'The Grand Canyon State'],
+        ['18', '新闻VR模板', 'The Grand Canyon State'],
+ 
+		['20', '淘宝模版', 'The Grand Canyon State'],
+		['21', '（单词）左侧图片3段3行摘要加扩展链接', 'The Grand Canyon State'],
+		['22', '（美食）左侧图片1段3行摘要', 'The Grand Canyon State'],
+		['23', '（网游）左侧图片5段5行摘要加扩展链接', 'The Grand Canyon State'],
+		['24', '（星座）左侧图片2段2行摘要加扩展链接', 'The Grand Canyon State'],
+		['25', '（汽车）左侧图片4行2列表格加扩展链接', 'The Grand Canyon State'],
+		['26', '（客服）左侧图片3段3行可包含链接摘要', 'The Grand Canyon State'],
+		['27', '北京时间模版', 'The Grand Canyon State'],
+		['28', '彩票模版', 'The Grand Canyon State'],
+		['29', '登陆模版', 'The Grand Canyon State'],
+		['30', '软件下载模版', 'The Grand Canyon State'],
+		['31', '搜索框模版', 'The Grand Canyon State'],
+		['32', '搜索框加扩展链接模版', 'The Grand Canyon State'],
+		['33', '左侧图片，10段10行摘要加扩展链接模版', 'The Grand Canyon State'],
+		['34', '左侧图片，2段摘要加扩展按钮', 'The Grand Canyon State'],
+		['35', '左侧图片，1段3行摘要加搜索框', 'The Grand Canyon State'],
+		['36', '地点选择和时间选择模版', 'The Grand Canyon State'],
+		['37', '地点选择模版', 'The Grand Canyon State'],
+		['38', '下拉菜单模版', 'The Grand Canyon State'],
+        ['39', '7列表格加居左扩展链接', 'The Grand Canyon State'],
+        ['40', '8列表格加扩展链接', 'The Grand Canyon State']
+        
+    ];
+
+
+	Ext.onReady(function(){
+		//创建新增或修改域名表记录信息的form表单
+		Ext.QuickTips.init();
+		Ext.form.Field.prototype.msgTarget = 'side';//统一指定错误信息提示方式
+		var batchForm = new Ext.form.FormPanel({ 
+			labelSeparator : ":",
+			frame:true,
+			border:false,
+			autoHeight: true,
+			width: 960,
+			fileUpload: true,
+
+			 items: [
+			  {
+	        	    layout:'column',
+	        	    width : 800,
+	        	    border:false,
+	        	    items:[
+						{
+	                        layout:'form',
+	                        columnWidth:.5,
+	                        border:false,
+	                        items:[
+	                            {
+	                                xtype:'combo',
+	                                fieldLabel:'模板编号',
+	                                name : 'templateid',
+	                                allowBlank : false,
+	                                blankText : '模板为必填项',
+	                                hiddenName : 'templateid',
+	                                store: Ext.exampledata.templateid_list,
+	                                typeAhead: true,
+	                                forceSelection: true,
+	                                triggerAction: 'all',
+	                                emptyText:'请选择其中一种...',
+	                                selectOnFocus:true
+	                            }
+	                          ]
+	                    },
+	        	        {
+	        	            columnWidth:.5,
+	        	            layout: 'form',
+	        	            border:false,
+	        	            items: [{ 
+	        				    xtype: 'textfield', 
+	        				    fieldLabel: 'XML文件', 
+	        				    allowBlank : false,
+	        				    name: 'file', 
+	        				    inputType: 'file'//文件类型 
+	        				}]
+	        	        }
+	        	      ]
+	        	}], 
+		      
+		     buttons: [{ 
+		        text: '上传', 
+		        handler: function() { 
+			        batchForm.form.url = "webUIS.do?method=validateXML";
+			    	 if( batchForm.form.isValid() ){
+				    	batchForm.getForm().submit({
+					    	waitMsg : '正在上传数据请稍后',//提示信息
+							waitTitle : '提示',//标题 
+					        success: function(form, action){
+				    			var failcause = action.result.cause;
+				    			Ext.MessageBox.show({
+						           title: '提示',
+						           msg: '验证阿拉丁记录成功',
+						           buttons: Ext.MessageBox.OK,
+						           icon: Ext.MessageBox.INFO
+						        });
+					        }, 
+					        failure: function(form, action){
+								var failcause = action.result.cause;
+								failcause = ReplaceAll(failcause,'<br>', '\n');
+								failcause = ReplaceAll(failcause,'<BR>', '\n');
+								Ext.MessageBox.show({
+						           title: '提示',
+						           msg: '验证阿拉丁记录失败。原因是:<br><textarea rows="10" cols="45" readonly="true">' + failcause + '</textarea>',
+						           buttons: Ext.MessageBox.OK,
+						           icon: Ext.MessageBox.ERROR
+						        });
+					        }
+				      	}); 
+			    	 }
+		     } 
+		   	}]
+		});
+		batchForm.render('dr');
+
+		function ReplaceAll(str, sptr, sptr1)
+		{
+			while (str.indexOf(sptr) >= 0)
+			{
+			   str = str.replace(sptr, sptr1);
+			}
+			return str;
+		}
+	});
+</script>
+<body>
+<div id="dr" style="width:100%;height:18%;"></div>
+<div id='grid-div' style="width:100%; height:82%;"></div>
+</body>
+</html>

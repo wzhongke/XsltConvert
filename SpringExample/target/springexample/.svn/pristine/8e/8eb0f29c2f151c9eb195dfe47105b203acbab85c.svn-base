@@ -1,0 +1,180 @@
+<%@ page language="java" contentType="text/html; charset=GBK"  pageEncoding="GBK"%>
+<%@ page import="
+java.util.HashMap,
+java.util.ArrayList,
+java.util.Iterator,
+com.sohu.frontweb.ParameterWrapper
+"
+%> 
+<% 
+	ParameterWrapper pw = new ParameterWrapper();
+	pw.init(request);
+	
+	String type = pw.getStringParameter("type","zoomLine");
+	String title = pw.getStringParameter("title","");
+	String table = pw.getStringParameter("table","");
+	
+	//String title = pw.getStringParameter("umis_web_apache_ip_stat","");
+	
+%>
+  
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=GBK"/>
+    <script language="JavaScript" src="js/chart/FusionCharts.js"></script>
+<style>
+
+#seachTable{font-size:16px;}
+#mainDiv ul{}
+#mainDiv ul li{float:left;margin:20px 20px 0px 0px;}
+.chartDiv{margin-top:20px;}
+</style>
+</head>   
+<script>
+
+var p;
+var today=new Date();
+var yestoday = new Date(today.getTime() - 24*60*60*1000); 
+var daysAgo = new Date(today.getTime() - 24*60*60*1000);
+
+	Ext.namespace('Ext.exampledata');
+	Ext.onReady(function(){
+	
+		/*****************************/		
+		var dr = new Ext.FormPanel({
+	    	labelWidth: 125,
+	        frame: true,
+	        width: 960,
+	  	  	bodyStyle:'padding:5px 5px 0',
+	        defaults: {width: 175},
+	      	//增加表单键盘事件
+	        keys:[
+	         {
+	             key: [10,13],
+	             fn:searchInfo
+	         } ],
+	        items: [
+	        	/*
+	        	{
+	        	xtype:'textfield',
+				width : 400,
+				id : 'title',
+				name : 'title',
+				fieldLabel:'数据',
+				value:'<%=title%>'
+	        	},*/
+            {
+        	    layout:'column',
+        	    width : 620,
+        	    border:false,
+        	    items:[
+        	        {
+        	            columnWidth:.5,
+        	            layout: 'form',
+        	            border:false,
+        	            items: [{
+        	            	xtype:'textfield',
+    						id : 'startDate',
+    						name : 'startDate',
+    						fieldLabel:'开始日期',
+    						cls:'Wdate',
+    						value:daysAgo.format('Y-m-d')+" 00:00"
+        	            }]
+        	        }
+        	      ]
+        	},
+        	{
+        	    layout:'column',
+        	    width : 620,
+        	    border:false,
+        	    items:[
+        	        {
+        	            columnWidth:.5,
+        	            layout: 'form',
+        	            border:false,
+        	            items: [{
+        	            	xtype:'textfield',
+    						id : 'endDate',
+    						name : 'endDate',
+    						fieldLabel:'结束日期',
+    						cls:'Wdate',
+    						value:yestoday.format('Y-m-d')+" 24:00"
+        	            }]
+        	        }
+        	      ]
+        	}
+        	
+        	],
+			buttons:[
+				{
+					text : '查询',
+					handler : function(){
+						searchInfo();
+					}
+				},
+				{
+					text : '返回',
+					handler : function(){
+						searchInfo();
+					}
+				}
+			]
+	      });
+		/**********************************************/		
+	    dr.render('dr_right');
+	        
+	    p=new Ext.Panel({
+		　　renderTo:"chart-div",//x,y,renderTo:Ext.getBody()初始化panel的位置
+		　　autoWidth:true,
+		   autoHeight:true
+		}).show();//在这里也可以不show（）
+	    
+	    searchInfo();
+
+	    Ext.get('startDate').on('click',function(){
+			WdatePicker({skin:'ext',dateFmt:'yyyy-MM-dd HH:mm'});
+		});
+    	
+    	Ext.get('endDate').on('click',function(){
+			WdatePicker({skin:'ext',dateFmt:'yyyy-MM-dd HH:mm'});
+		});
+		
+
+function toDateStr(date){
+	return date.replaceAll("-","").replaceAll(":","").replaceAll(" ","");
+}
+		
+function searchInfo(){
+
+	var startDate = toDateStr(document.getElementById("startDate").value);
+	var endDate = toDateStr(document.getElementById("endDate").value);
+	
+	//var searchUrl = 'flow/zoom_line.jsp?&r='+Math.random();
+	var searchUrl = 'flow/<%=type%>.jsp?table=<%=table%>&r='+Math.random();
+	
+	var title = escape("<%=title%>");
+	searchUrl += "&title="+title+"&sdate="+startDate+"&edate="+endDate;
+			
+	p.load({
+					url: searchUrl,
+					callback : function(){
+					},
+					scripts: true
+	});
+	
+	return false;
+}		
+	
+	});
+
+</script>
+<body>
+<div id="dr_right" style="width:100%;height:auto;"></div>
+<div id='chart-div' style="width:100%; height:70%;"></div>
+
+				 		 
+</body>
+
+</html>
+

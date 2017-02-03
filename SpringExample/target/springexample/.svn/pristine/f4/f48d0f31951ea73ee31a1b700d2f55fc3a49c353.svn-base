@@ -1,0 +1,9 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<script type="text/javascript">
+alert("会话超时（一般由长时间未操作引起），系统将会自动重新登陆");
+top.location="/index.jsp";
+</script>
+</head>
+</html>

@@ -1,0 +1,336 @@
+<%@ page language="java" contentType="text/html; charset=GBK"
+    pageEncoding="GBK"%>
+<%
+
+StringBuffer columnSb =  new StringBuffer();
+StringBuffer batchColumnSb =  new StringBuffer();
+
+StringBuffer storeSb =  new StringBuffer();
+StringBuffer mapSb =  new StringBuffer();
+StringBuffer renderSb = new StringBuffer();
+
+StringBuffer timePickerSb = new StringBuffer();
+
+for(BlackColumn bc : columnList){
+    StringBuffer thisColumnSb = new StringBuffer();
+    if(bc.getTypeName().equals("text")||bc.getTypeName().equals("number")){
+        thisColumnSb.append("{\n");
+        if(bc.isHidden())
+            thisColumnSb.append("xtype:'hidden',\n");
+        else{
+            thisColumnSb.append("xtype:'textfield',\n");
+            thisColumnSb.append("cls:'tabclass',\n");
+        }
+        //if(bc.isReadOnly()||(bc.getPrivilage().equals("check")&&((Integer)session.getAttribute(table+"_check")!=1)))
+        if(bc.isReadOnly())
+            thisColumnSb.append("readOnly:true,\n");
+        
+        //权限属性
+        thisColumnSb.append("privilege:'"+bc.getPrivilage()+"',\n");                        
+        thisColumnSb.append("width : "+ bc.getSize() +",\n");
+        //thisColumnSb.append("allowBlank : false,\n");
+        //columnSb.append("blankText : '"+ bc.getCnName() +"不能为空',\n");
+        if(bc.getIsUrl()){
+            thisColumnSb.append("regex: /^((http|https)\\:\\/\\/)?([\\w\\.]+)(\\/[\\w-\\.\\/\\?%&=]*)?$/,\n");
+            thisColumnSb.append("regexText   : \"url格式不正确\",\n");
+        }
+        
+        thisColumnSb.append("name : '"+ bc.getName() +"',\n");
+        thisColumnSb.append("id : '"+ bc.getName() +"',\n");
+        
+        if(thisTable.getType().equals("apply")&&bc.getName().equals("in_charge"))
+            thisColumnSb.append("value : user,\n");
+        else{
+            String defaultValue = bc.getDefaultValue();
+            if(defaultValue.equals("CURRENTUSER")){
+                thisColumnSb.append("value : '"+ user +"',\n");
+            }else if(defaultValue.equals("CURRENTDATE")){
+                thisColumnSb.append("value : getTimeAfterNow(0),\n");
+            }else{
+                thisColumnSb.append("value : '"+ defaultValue +"',\n");
+            }
+        }
+        thisColumnSb.append("fieldLabel : '"+ bc.getCnName() +"'\n");
+        thisColumnSb.append("},\n");
+                    
+    //thisColumnSb.append("id : '"+ bc.getName() +"',\n");
+    
+
+                    
+    }else if(bc.getTypeName().equals("textarea")){
+        thisColumnSb.append("{\n");
+        if(bc.isHidden())
+            thisColumnSb.append("xtype:'hidden',\n");
+        else
+            thisColumnSb.append("xtype:'textarea',\n");
+    
+        if(bc.isReadOnly())
+            thisColumnSb.append("readOnly:true,\n");
+        
+        //权限属性
+        thisColumnSb.append("cls:'tabclass',\n");
+        thisColumnSb.append("privilege:'"+bc.getPrivilage()+"',\n");                        
+        thisColumnSb.append("width : "+ bc.getSize() +",\n");
+        thisColumnSb.append("height : "+ bc.getHeight() +",\n");
+        //thisColumnSb.append("allowBlank : false,\n");
+        //thisColumnSb.append("blankText : '"+ bc.getCnName() +"不能为空',\n");
+        thisColumnSb.append("name : '"+ bc.getName() +"',\n");
+        thisColumnSb.append("id : '"+ bc.getName() +"',\n");
+        if(thisTable.getType().equals("apply")&&bc.getName().equals("in_charge"))
+            thisColumnSb.append("value : user,\n");
+        else{
+            String defaultValue = bc.getDefaultValue();
+            if(defaultValue.equals("CURRENTUSER")){
+                thisColumnSb.append("value : '"+ user +"',\n");
+            }else if(defaultValue.equals("CURRENTDATE")){
+                thisColumnSb.append("value : 'getTimeAfterNow(0)',\n");
+            }else{
+                thisColumnSb.append("value : '"+ defaultValue +"',\n");
+            }
+        }
+        
+        thisColumnSb.append("fieldLabel : '"+ bc.getCnName() +"'\n");
+        thisColumnSb.append("},\n");                    
+
+    }else if(bc.getTypeName().equals("datetime")){
+        
+        thisColumnSb.append("{\n");
+        if(bc.isHidden())
+            thisColumnSb.append("xtype:'hidden',\n");
+        else
+            thisColumnSb.append("xtype:'textfield',\n");
+        //if(bc.isReadOnly()||(bc.getPrivilage().equals("check")&&((Integer)session.getAttribute(table+"_check")!=1)))
+        if(bc.isReadOnly())
+            thisColumnSb.append("readOnly:true,\n");
+        
+        //权限属性
+        thisColumnSb.append("privilege:'"+bc.getPrivilage()+"',\n");    
+                                
+        thisColumnSb.append("width : "+ bc.getSize() +",\n");
+        //thisColumnSb.append("allowBlank : false,\n");
+        //thisColumnSb.append("blankText : '"+ bc.getCnName() +"不能为空',\n");
+        thisColumnSb.append("name : '"+ bc.getName() +"',\n");
+        thisColumnSb.append("id : '"+ bc.getName() +"',\n");
+        if(bc.getDefaultValue().equals("CURRENTDATE")){
+            thisColumnSb.append("value : getTimeAfterNow(0),\n");
+        }else{
+            thisColumnSb.append("value : '"+ bc.getDefaultValue() +"',\n");
+        }
+        thisColumnSb.append("fieldLabel : '"+ bc.getCnName() +"',\n");
+        thisColumnSb.append("cls:'Wdate'\n");
+        thisColumnSb.append("},\n");
+        
+    
+        
+        if(bc.getDefaultValue().isEmpty()||bc.getDefaultValue().equals("CURRENTDATE")){
+            timePickerSb.append("Ext.getCmp('"+ bc.getName() +"').setValue(getTimeAfterNow(0));\n");
+            timePickerSb.append("Ext.getCmp('batch_"+ bc.getName() +"').setValue(getTimeAfterNow(0));\n");
+        
+        }
+        //统一在点击事件时绑定click事件
+        //timePickerSb.append("document.getElementById('"+ bc.getName() +"').onclick = function(){WdatePicker({skin:'ext',dateFmt:'yyyy-MM-dd HH:mm:ss'});};\n");
+        //timePickerSb.append("document.getElementById('bat_"+ bc.getName() +"').onclick = function(){WdatePicker({skin:'ext',dateFmt:'yyyy-MM-dd HH:mm:ss'});};\n");
+
+        
+    }else if(bc.getTypeName().equals("select")){
+        
+        StringBuffer thisStoreSb = new StringBuffer();
+        
+        thisStoreSb.append("Ext.exampledata.exampledata_"+ bc.getName() +" = [\n");
+        if(bc.getDataSrc().isEmpty()){
+            
+
+            mapSb.append("var "+bc.getName()+"Map = {\n");
+            int i = 0;
+            for(BlackColumnItem bi : bc.getItems()){
+                i++;
+                if(i==1){
+                    thisStoreSb.append("['"+ bi.getValue() +"', '"+ bi.getText() +"', '']\n");
+                    mapSb.append("'"+ bi.getValue() +"':'"+ bi.getText() +"'\n");
+                }else{
+                    thisStoreSb.append(",['"+ bi.getValue() +"', '"+ bi.getText() +"', '']\n");
+                    mapSb.append(",'"+ bi.getValue() +"':'"+ bi.getText() +"'\n");
+            
+                }
+            }
+            mapSb.append("};");                         
+            
+        }
+        thisStoreSb.append("];\n"); 
+        
+        if(!bc.getDataSrc().isEmpty()){
+            thisStoreSb.append("var "+bc.getName()+"SelectStore = new Ext.data.Store({\n");
+            thisStoreSb.append("    reader: new Ext.data.XmlReader({\n");
+            thisStoreSb.append("        totalRecords: 'total',\n");
+            thisStoreSb.append("        record: '"+bc.getRecordName()+"',\n");
+            thisStoreSb.append("        id: '"+bc.getItemValue()+"'\n");
+            thisStoreSb.append("    },\n");
+            thisStoreSb.append("    Ext.data.Record.create([\n");
+            thisStoreSb.append("        {name: '"+bc.getItemValue()+"'},\n");
+            thisStoreSb.append("        {name: '"+bc.getItemText()+"'}\n");
+            thisStoreSb.append("    ])),\n");
+            
+            thisStoreSb.append("    proxy : new Ext.data.HttpProxy({\n");
+            thisStoreSb.append("        url : '"+bc.getDataSrc()+"'\n");
+            thisStoreSb.append("    }),\n");
+            thisStoreSb.append("    sortInfo: {field: '"+ bc.getItemValue() +"', direction: 'DESC'},\n");
+            thisStoreSb.append("    remoteSort: true\n");
+            thisStoreSb.append("})\n");
+            
+            thisStoreSb.append(""+bc.getName()+"SelectStore.load({\n");
+            thisStoreSb.append("    callback: function() {\n");
+            thisStoreSb.append("        store.load({params:{start:0, limit:200}});\n");
+            thisStoreSb.append("    }\n");
+            thisStoreSb.append("});\n");
+        }
+        storeSb.append(thisStoreSb);
+        storeSb.append(thisStoreSb.toString().replaceAll("exampledata_"+ bc.getName(),"exampledata_batch_"+ bc.getName()).replaceAll(bc.getName()+"SelectStore","batch_"+bc.getName()+"SelectStore"));
+        
+        /**
+                
+            var vrtypeStore = new Ext.data.Store({
+                reader: new Ext.data.XmlReader({
+                    totalRecords: "results",
+                    record: "VRTypeRecord",
+                    id: "classid"
+                },
+                Ext.data.Record.create([
+                    {name: 'classtag'},
+                    {name: 'classid'},
+                    {name: 'chname'},
+                    {name: 'vrtemplate_tplid'}
+                ])
+                ),
+                proxy : new Ext.data.HttpProxy({
+                    url : 'webUIS.do?method=getVRTypeAllList'
+                }),
+                sortInfo: {field: 'VRType', direction: 'DESC'},
+                remoteSort: true
+            })
+            vrtypeStore.load({
+                callback: function() {
+                    store.load({params:{start:0, limit:200}});
+                }
+            });                     
+        
+        
+        
+        **/
+        
+        
+        
+        thisColumnSb.append("{\n");
+        if(bc.isHidden())
+            thisColumnSb.append("xtype:'hidden',\n");
+        else                        
+            thisColumnSb.append("xtype:'combo',\n");
+        //if(bc.isReadOnly()||(bc.getPrivilage().equals("check")&&((Integer)session.getAttribute(table+"_check")!=1)))
+        if(bc.isReadOnly())
+            thisColumnSb.append("disabled:true,\n");
+            
+        thisColumnSb.append("privilege:'"+bc.getPrivilage()+"',\n");
+        
+        thisColumnSb.append("width:'"+bc.getSize()+"',\n"); 
+        thisColumnSb.append("fieldLabel:'"+bc.getCnName()+"',\n");
+        thisColumnSb.append("name : '"+ bc.getName() +"',\n");
+        thisColumnSb.append("id : '"+ bc.getName() +"_select',\n");
+        thisColumnSb.append("allowBlank : false,\n");
+        thisColumnSb.append("blankText : '"+bc.getCnName()+"为必填项',\n");
+        thisColumnSb.append("hiddenName : '"+ bc.getName() +"',\n");
+        if(bc.getDataSrc().isEmpty())
+            thisColumnSb.append("store: Ext.exampledata.exampledata_"+ bc.getName() +",\n");
+        else{
+            thisColumnSb.append("store: "+bc.getName()+"SelectStore,\n");
+            thisColumnSb.append("displayField: '"+bc.getItemText()+"',\n");
+            thisColumnSb.append("valueField: '"+bc.getItemValue()+"',\n");
+        }
+        thisColumnSb.append("typeAhead: true,\n");  
+        thisColumnSb.append("forceSelection: true,\n"); 
+        thisColumnSb.append("triggerAction: 'all',\n"); 
+        thisColumnSb.append("emptyText:'请选择其中一种...',\n");   
+        thisColumnSb.append("selectOnFocus:true,\n");   
+        thisColumnSb.append("value: '"+ bc.getDefaultValue() +"'\n");   
+        thisColumnSb.append("},\n");
+                            
+    }else if(bc.getTypeName().equals("radio")){
+        int i = 0;
+        int itemsNum = bc.getItems().size();
+        mapSb.append("var "+bc.getName()+"Map = {");
+        
+        thisColumnSb.append("{");
+        thisColumnSb.append("xtype:'radiogroup',");
+        thisColumnSb.append("layout:'column',");
+        thisColumnSb.append("fieldLabel:'"+bc.getCnName()+"',");
+        thisColumnSb.append("autoHeight:true,");
+        thisColumnSb.append("columns:"+itemsNum+",");
+        thisColumnSb.append("labelSeparator: ':',");
+        thisColumnSb.append("items:[");
+        for(BlackColumnItem bi : bc.getItems()){
+            i++;
+            thisColumnSb.append("{\n");
+            if(bc.isHidden())
+                thisColumnSb.append("xtype:'hidden',\n");                                                   
+            else
+                thisColumnSb.append("xtype: 'radio',\n");
+                                        
+            //if(bc.isReadOnly()||(bc.getPrivilage().equals("check")&&((Integer)session.getAttribute(table+"_check")!=1)))
+            if(bc.isReadOnly())
+                thisColumnSb.append("disabled:true,\n");                            
+            thisColumnSb.append("privilege:'"+bc.getPrivilage()+"',\n");
+            
+            if(i==1){
+                //thisColumnSb.append("fieldLabel: '"+bc.getCnName()+":',\n");
+                mapSb.append("'"+ bi.getValue() +"':'"+ bi.getText() +"'\n");
+            }else{
+                //thisColumnSb.append("fieldLabel: '',\n");
+                mapSb.append(",'"+ bi.getValue() +"':'"+ bi.getText() +"'\n");
+            }
+                
+            if(bi.getValue().equals(bc.getDefaultValue()))
+                thisColumnSb.append("checked: true,\n");
+            else
+                thisColumnSb.append("checked: false,\n");
+            
+            thisColumnSb.append("width: '"+ bc.getSize() +"',\n");  
+            thisColumnSb.append("labelSeparator: '',\n");
+            thisColumnSb.append("boxLabel: '"+ bi.getText() +"',\n");
+            thisColumnSb.append("id: '"+ bc.getName()+ i +"',\n");                              
+            thisColumnSb.append("name: '"+ bc.getName() +"',\n");
+            thisColumnSb.append("inputValue: '"+ bi.getValue() +"'\n");
+            if(i==itemsNum)
+                thisColumnSb.append("}");
+            else{
+                thisColumnSb.append("},");
+            }
+        }
+        thisColumnSb.append("]},");
+        mapSb.append("};");
+    }
+    
+    if(bc.getTypeName().equals("select") || bc.getTypeName().equals("radio")){
+    
+        if(bc.getDataSrc().isEmpty()){
+            renderSb.append("function "+bc.getName()+"Render(val){\n");
+            renderSb.append("if("+bc.getName()+"Map[val])\n");
+            renderSb.append("   return "+bc.getName()+"Map[val];\n");
+            renderSb.append("else");
+            renderSb.append("   return val;\n");
+            renderSb.append("}\n");                                 
+        }
+        else{
+            renderSb.append("function "+bc.getName()+"Render(val){\n"); 
+            renderSb.append("   if("+bc.getName()+"SelectStore.getById(val)!=null)\n"); 
+            renderSb.append("       return "+ bc.getName() +"SelectStore.getById(val).get('"+ bc.getItemText() +"');");
+            renderSb.append("   else");
+            renderSb.append("       return val;");          
+            renderSb.append("}\n");         
+        }
+    }
+    
+    columnSb.append(thisColumnSb);
+    if(!thisTable.getBatchColumn().equals(bc.getName())){
+        batchColumnSb.append(thisColumnSb.toString().replace("'"+bc.getName()+"'","'batch_"+bc.getName()+"'"));
+    }
+}
+
+%>

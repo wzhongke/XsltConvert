@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://java.sun.com/xml/ns/javaee"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+         version="3.0">
+
+    <welcome-file-list>
+        <welcome-file>/index.jsp</welcome-file>
+    </welcome-file-list>
+
+    <context-param>
+        <param-caption>logbackConfigLocation</param-caption>
+        <param-value>/resources/logback.xml</param-value>
+    </context-param>
+
+    <listener>
+        <listener-class>ch.qos.logback.ext.spring.web.LogbackConfigListener</listener-class>
+    </listener>
+
+    <filter>
+        <filter-caption>encoding</filter-caption>
+        <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+        <async-supported>true</async-supported>
+        <init-param>
+            <param-caption>encoding</param-caption>
+            <param-value>utf-8</param-value>
+        </init-param>
+        <init-param>
+            <param-caption>forceEncoding</param-caption>
+            <param-value>true</param-value>
+        </init-param>
+    </filter>
+    <filter-mapping>
+        <filter-caption>encoding</filter-caption>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+    <!-- applicationContext.xml 位置 -->
+    <context-param>
+        <param-caption>contextConfigLocation</param-caption>
+        <param-value>/resources/applicationContext.xml</param-value>
+    </context-param>
+    <!--  register an ApplicationContext using the ContextLoaderListener -->
+    <listener>
+        <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+    </listener>
+ <!--   <servlet>
+        <servlet-caption>dispatcher</servlet-caption>
+        <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+        <init-param>
+            <param-caption>contextConfigLocation</param-caption>
+            <param-value>/resources/dispatcher-servlet.xml</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+        <async-supported>true</async-supported>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-caption>dispatcher</servlet-caption>
+        <url-pattern>/</url-pattern>
+    </servlet-mapping>
+-->
+    <!--<error-page>-->
+        <!--<location>/WEB-INF/error.jsp</location>-->
+    <!--</error-page>-->
+</web-app>

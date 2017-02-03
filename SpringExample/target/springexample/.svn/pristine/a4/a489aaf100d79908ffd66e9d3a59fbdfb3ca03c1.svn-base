@@ -1,0 +1,181 @@
+<%@ page language="java" contentType="text/html; charset=GBK"  pageEncoding="GBK"%>
+<%@ page import="
+java.util.HashMap,
+java.util.ArrayList,
+java.util.Iterator,
+com.sohu.frontweb.flow.data.Triple,
+com.sohu.frontweb.uigs.action.UigsAction,
+com.sohu.frontweb.uigs.service.ChartService,
+com.sohu.frontweb.ParameterWrapper,
+java.net.URLDecoder,
+java.net.URLEncoder,
+java.util.Date,
+java.text.SimpleDateFormat,
+java.util.Calendar
+"%>
+ 
+<% 
+		ArrayList<HashMap<String,String>> trendList =  UigsAction.getTrend();
+        HashMap<String,String> todayMap = trendList.get(0);
+        HashMap<String,String> lastWeekMap = trendList.get(1);
+        
+		String pvToday = "";
+		String pvLastWeek = "";
+		//生成label
+		String timeLabel = "";
+		for(int i = 0;i<24;i++){
+			String  hour = i+"";
+			if(i<10)
+				hour = "0"+i;
+			for(int j =0; j < 60;j=j+5){
+				String minite = j+"";
+				if(j<10)
+					minite = "0"+j;
+				
+				if(todayMap.containsKey(hour + minite))
+					pvToday += todayMap.get(hour + minite)+"|";
+				else
+					pvToday += "|";
+				
+				if(lastWeekMap.containsKey(hour + minite))
+					pvLastWeek += lastWeekMap.get(hour + minite)+"|";
+				else
+					pvLastWeek += "|";
+
+				
+				timeLabel += hour + minite+"|";
+			}
+			
+		}
+		
+		pvToday = pvToday.substring(0,pvToday.length()-1);
+		pvLastWeek = pvLastWeek.substring(0,pvLastWeek.length()-1);
+		timeLabel = timeLabel.substring(0,timeLabel.length()-1);		
+		
+		
+		int limit = 10;
+		ArrayList<String> columnTQList = new ArrayList<String>();
+		columnTQList.add("title");
+		columnTQList.add("date");
+		columnTQList.add("count");
+		columnTQList.add("count");
+		
+		ArrayList<Triple> tQWhereList = new ArrayList<Triple>();
+		String orderBy = " date DESC";
+		
+		
+		StringBuffer tQBuffer =  new StringBuffer();
+		ArrayList<HashMap<String,String>>  tQList = ChartService.getDataList(columnTQList,"stat_op_all_web_apache_query",tQWhereList,orderBy,limit);
+		for(HashMap<String,String>tq : tQList ){
+			tQBuffer.append("<set label='"+tq.get("title").replace("\\","\\\\")+"' value='"+tq.get("count")+"' />");
+		}
+		
+		
+		ArrayList<Triple> iPWhereList = new ArrayList<Triple>();
+		
+		StringBuffer tIBuffer =  new StringBuffer();
+		ArrayList<HashMap<String,String>>  tIList = ChartService.getDataList(columnTQList,"stat_op_all_web_apache_ip",iPWhereList,orderBy,limit);
+		for(HashMap<String,String>ti : tIList ){
+			tIBuffer.append("<set label='"+ti.get("title")+"' value='"+ti.get("count")+"' />");
+		}
+		
+		//地域分布
+		StringBuffer disBuffer =  new StringBuffer();
+		ArrayList<HashMap<String,String>>  disList = ChartService.getDataList(columnTQList,"stat_op_all_web_apache_area",iPWhereList," date DESC,count DESC",limit);
+		for(HashMap<String,String>dis : disList ){
+			disBuffer.append("<set label='"+dis.get("title")+"'  toolText='"+dis.get("title")+"' value='"+dis.get("count")+"'/>");
+			//tIBuffer.append("<set label='"+ti.get("title")+"' value='"+ti.get("count")+"' />");
+		}
+				
+		
+%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=GBK"/>
+    <script language="JavaScript" src="js/chart/FusionCharts.js"></script>
+</head>   
+<body>
+<table width="100%">
+<tr>
+	<td colspan=2><input type="button" value="刷新" onclick="loadMainContentByUrl('uigs/index.jsp?table=stat_op_all_web_uigs_minpvuv');"></td>
+</tr>
+<tr>
+	<td width="50%" >	
+		<div id="zoomline_chartdiv" > </div>
+	</td>
+	<td width="50%">	
+		<div id="topQuery_chartdiv" > </div>
+	</td>	
+</tr>
+<tr	>	
+	<td width="50%" >
+		<div id="dis_chartdiv" > </div>
+	</td>
+	<td width="50%">
+		<div id="topIp_chartdiv" > </div>
+	</td>
+</tr>
+<!-- tr>
+	<td>
+		
+	</td>
+	<td>
+	
+	</td>
+</tr>
+ -->
+</table>
+<script type="text/javascript">
+	var zoomLineXml = "<chart  caption='网页PV趋势' subCaption='每5分钟' compactDataMode='1' dataSeparator='|' formatNumberScale='0' paletteThemeColor='5D57A5' divLineColor='5D57A5'  divLineAlpha='40' vDivLineAlpha='40' dynamicAxis='1' lineAlpha='100' lineThickness='2' >"+
+				 "<categories>"+
+				 "<%=timeLabel%>"+
+				 "</categories>"+
+				 "<dataset seriesName='当日 pv' color='FF0000'>"+
+				 "<%=pvToday%>"+
+				 "</dataset>"+
+				 "<dataset seriesName='上周 pv' color='BBDA00'>"+
+				 "<%=pvLastWeek%>"+
+				 "</dataset>"+			 
+				 "</chart>";
+				 
+			var chart = new FusionCharts("flash/FUSIONCHARTS.COM/ZoomLine.swf", "ChartId", "100%", "350", "0", "0");
+		   //chart.setXMLUrl("apollo/xml?chart=pvTrend");	
+		   chart.setXMLData(zoomLineXml);
+		   chart.render("zoomline_chartdiv");	
+	
+	
+ 	
+	var topQueryXml = "<chart yAxisName='查询数' caption='Top 10 Query' subCaption='最近5分钟' numberPrefix='' useRoundEdges='1' bgColor='FFFFFF,FFFFFF' showBorder='0'  formatNumberScale='0' >"+
+					"<%=tQBuffer.toString()%>"+
+					"</chart>";
+
+	var chart = new FusionCharts("flash/FUSIONCHARTS.COM/Column2D.swf", "ChartId", "100%", "350", "0", "1");
+            chart.setXMLData(topQueryXml);
+            chart.render("topQuery_chartdiv");
+
+	var topIPXml = "<chart yAxisName='IP数' caption='Top 10 IP' subCaption='最近5分钟' numberPrefix='' useRoundEdges='1' bgColor='FFFFFF,FFFFFF' showBorder='0'  formatNumberScale='0' >"+
+					"<%=tIBuffer.toString()%>"+
+					"</chart>";
+
+	var chart = new FusionCharts("flash/FUSIONCHARTS.COM/Bar2D.swf", "ChartId", "100%", "350", "0", "1");
+            chart.setXMLData(topIPXml);
+            chart.render("topIp_chartdiv");
+            
+            
+	var pieDisXml = "<chart caption=\"分布\" palette=\"2\" formatNumberScale='0' animation=\"1\" subCaption=\"\" YAxisName=\"\" showValues=\"1\" formatNumberScale=\"0\" showPercentInToolTip=\"1\" showLabels=\"1\" showLegend=\"0\" showPercentValues=\"1\">" +
+				"<%=disBuffer.toString()%>"+
+				 "<styles><definition><style type=\"font\" name=\"CaptionFont\" color=\"666666\" size=\"15\" /><style type=\"font\" name=\"SubCaptionFont\" bold=\"0\" /></definition>" +
+				 "<application><apply toObject=\"caption\" styles=\"CaptionFont\"/> <apply toObject=\"SubCaption\" styles=\"SubCaptionFont\" /></application>" +
+				 "</styles></chart>";
+		
+	 
+		   var chart = new FusionCharts("flash/FUSIONCHARTS.COM/Pie3D.swf", "ChartId", "100%", "350", "0", "0");
+		   chart.setXMLData(pieDisXml);
+		   chart.render("dis_chartdiv");	            		   	 
+
+
+	setInterval("loadMainContentByUrl('uigs/index.jsp?table=umis_web_uigs_minpvuv_stat')", 300000 );
+</script>
+</body>
+</html>

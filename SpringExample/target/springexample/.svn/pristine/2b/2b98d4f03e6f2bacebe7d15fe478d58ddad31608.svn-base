@@ -1,0 +1,9 @@
+#c3p0.properties µƒ≈‰÷√
+
+c3p0.jdbc.driverClassName=com.mysql.jdbc.Driver
+c3p0.jdbc.url=jdbc:mysql://10.134.85.164:3306/test
+c3p0.jdbc.username=wang
+c3p0.jdbc.password=wang1201
+
+c3p0.jdbc.initialSize=5
+c3p0.jdbc.maxActive=10

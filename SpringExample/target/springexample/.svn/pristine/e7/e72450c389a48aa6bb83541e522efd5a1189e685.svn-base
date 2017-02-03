@@ -1,0 +1,552 @@
+<%@ page language="java" contentType="text/html; charset=GBK"
+    pageEncoding="GBK"%>
+<%@ page import="java.sql.Timestamp,java.util.Date,java.text.SimpleDateFormat,com.sohu.frontweb.base.action.UmisAction"%>
+
+<%
+    SimpleDateFormat sdformat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    Timestamp timestamp = new Timestamp(new Date().getTime());
+   String currentTime =  sdformat.format(timestamp);
+%>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=GBK">
+	<title>域名表记录列表</title>
+</head>
+<script type="text/javascript">
+tablename = "ubs_web_channel_manage";
+syncHubType = "other";
+pageSize = 18;
+</script>
+<script type="text/javascript" src="/js/quickSync.js"></script>
+<script type="text/javascript" src="/js/tabinsert.js"></script>
+
+<script type="text/javascript">
+	Ext.namespace('Ext.exampledata');
+	Ext.exampledata.matchrule_list = [
+ 		['2','2级:模糊文字匹配', 'The Heart of Dixie'],
+        ['3','3级:精确文字匹配', 'The Land of the Midnight Sun']
+     ];
+     
+    Ext.exampledata.encombox_list = [
+		['0','不屏蔽', 'The Heart of Dixie'],
+	    ['1','条件词封禁', 'The Land of the Midnight Sun'],
+	    ['2','结果词封禁', 'The Land of the Midnight Sun'],
+	    ['3','两者都屏蔽', 'The Land of the Midnight Sun']
+	 ]; 
+    
+ 
+     
+	Ext.onReady(function(){
+		var exportConditionUrl = 'channel_check.do?method=exportRecord';
+		//创建新增或单独修改表记录信息的form表单
+		Ext.QuickTips.init();
+		Ext.form.Field.prototype.msgTarget = 'side';//统一指定错误信息提示方式
+
+
+		var exportConditionUrl = 'channel_check.do?method=getRecordList';
+		
+		//定义数据集对象
+		var store = new Ext.data.Store({//配置分组数据集
+			reader: new Ext.data.XmlReader({
+				totalRecords: "results",
+				record: "WebhintChannelRecord",
+				id: "id"
+			},
+			Ext.data.Record.create([
+				{name: 'id'},
+				{name: 'channelname'},
+				{name:"status"},				
+				{name: 'source'},
+				
+				{name: 'create_time',type:'date', dateFormat: 'Y-m-d H:i:s'},
+				{name: 'modify_time',type:'date', dateFormat: 'Y-m-d H:i:s'},				
+				{name: 'start_time', type: 'date', dateFormat: 'Y-m-d H:i:s'},
+				{name: 'end_time', type: 'date', dateFormat: 'Y-m-d H:i:s'},
+				{name:"user"},
+				{name: 'sync_status'},
+                {name: 'sync_message'},
+                {name: 'sync_modify_time',type:'date',dateFormat:'Y-m-d H:i:s'}
+			])
+			),
+			proxy : new Ext.data.HttpProxy({
+				url : 'channel_check.do?method=getRecordList'
+			}),
+			sortInfo: {field: 'create_time', direction: 'DESC'},
+	  		remoteSort: true
+		})
+
+		
+		<%//根据权限信息显示工具栏
+		StringBuffer toolbar_str = new StringBuffer();
+    	toolbar_str.append("{text : '上线',iconCls:'add',handler : showOnline},");
+    	toolbar_str.append("{text : '下线',iconCls:'option',handler : showOffline},"); 	    
+	    toolbar_str.append("{text : '快速同步new',iconCls:'batch-remove',handler : doSync},");
+	    toolbar_str.append("{text : '取消同步',iconCls:'batch-remove',handler : doCancel},");
+    	    	
+	    toolbar_str.deleteCharAt(toolbar_str.length()-1);
+	    %>
+		//创建工具栏组件
+		var toolbar = new Ext.Toolbar([
+		    <%=toolbar_str.toString()%>
+		]);
+    	
+    	//创建分页工具栏
+    	var pagingBar = new Ext.PagingToolbar({
+	        pageSize: 18,
+	        store: store,
+	        displayInfo: true,
+	        displayMsg: '显示 {0} - {1} , 共 {2} 条记录',
+	        emptyMsg: "没有任何记录",
+	        items:[{text : '导出',iconCls:'option',handler : exportExcel}]
+    	});
+		//创建Grid表格组件
+		var cb = new Ext.grid.CheckboxSelectionModel();
+		//创建过滤器
+		var filters = new Ext.grid.GridFilters({
+		  filters:[
+		    {type: 'numeric',  dataIndex: 'id'},
+		    {type: 'string',  dataIndex: 'url'},
+		    {type: 'boolean', dataIndex: 'tag_block'},
+		    {type: 'boolean', dataIndex: 'tag_reversible'},
+		    {
+		      type: 'list',  
+		      dataIndex: 'extra_attr', 
+		      options: ['无价值', '死链', '非中文'],
+		      phpMode: true
+		    },
+		    {type: 'string',  dataIndex: 'user'},
+		    {type: 'date',  dataIndex: 'sub_date'},
+		    {type: 'string',  dataIndex: 'info'}
+		]});
+
+		function sourceRenderer(val){
+	        if(val == "sohu.com"){
+	            return 'pc搜狐网';
+	        }else if(val == "qq.com"){
+	            return 'pc腾讯网';
+	        }else if(val == "info.3g.qq.com"){
+	            return "手机腾讯网";
+	        }else
+		        return val;
+    	}
+		function urlRenderer(val){
+		    return "<a href=\""+val+"\" target=\"_blank\">"+val+"</a>";
+		}
+		function statusRenderer(val){
+		    if(val == 1){
+                return '下线';
+            }else if(val == 0){
+                return '上线';
+            }else{
+                return val;
+            }
+            
+		}
+
+		function exportExcel(){
+		    alert("抱歉，暂不支持");
+		}
+
+		//开始查询表单部分
+		var dr = new Ext.FormPanel({
+	    	labelWidth: 125,
+	        frame: true,
+	  	  	bodyStyle:'padding:5px 5px 0',
+	  	  	width: 960,
+	  	  	labelAlign: 'left',
+	        defaults: {width: 275},
+	      	//增加表单键盘事件
+	        keys:[
+	         {
+	             key: [10,13],
+	             fn:query
+	         } ],
+	         items: [{
+		        	xtype:'radiogroup',
+					width : 500,
+					fieldLabel:'来源',
+					labelSeparator:':',
+					columns:4,
+                    items:[
+                           {boxLabel:'pc腾讯网',name:'query_source',inputValue:"qq.com",border:false},
+                           {boxLabel:'pc搜狐网',name:'query_source',inputValue:"sohu.com",border:false},
+                           {boxLabel:'手机腾讯网',name:'query_source',inputValue:"info.3g.qq.com",border:false},                           
+                           {boxLabel:'ALL',name:'query_source',inputValue:"",checked:true,border:false}
+                    ]
+		        },{
+                    xtype:'radiogroup',
+                    fieldLabel:'状态',
+                    labelSeparator:':',
+                    columns:3,
+                    width:300,
+                    items:[
+                           {boxLabel:'上线',name:'query_status',inputValue:0,border:false},
+                           {boxLabel:'下线',name:'query_status',inputValue:1,border:false},
+                           {boxLabel:'ALL',name:'query_status',inputValue:-1,checked:true,border:false}
+                    ]                   
+                },            
+                {
+		            xtype:'textfield',
+		            id:'query_sub_user',
+		            name:'query_sub_user',
+		            fieldLabel:'提交人',
+		            width:400
+		        }],
+			buttons:[
+				{
+					text : '查询',
+					handler : function(){
+						query(true);
+					}
+				},
+				{
+					text : '返回',
+					handler : function(){
+						query(false);
+					}
+				}
+			]
+	      });
+
+		var recordGrid = new Ext.grid.GridPanel({
+			applyTo : 'grid-div',
+			tbar : toolbar,
+			frame:true,
+			loadMask: true,
+			//plugins: filters,
+			autoScroll: true,
+			autoWidth:true,
+			//width: 960,
+			store: store,
+			viewConfig : {
+				autoFill : true
+			},
+			sm : cb,
+			columns: [//配置表格列
+				new Ext.grid.RowNumberer({
+					header : '行号',
+					width : 40
+				}),//表格行号组件
+				cb,
+				{header: "编号", width: 30, dataIndex: 'id', sortable: true},
+				{header: "频道名称", width: 80, dataIndex: 'channelname', sortable: true},			
+				{header: "来源", width: 40, dataIndex: 'source', renderer: sourceRenderer, sortable: true},
+				//{header: "标题", width: 60, dataIndex: 'title', sortable: true},
+				{header: "状态", width: 20, dataIndex: 'status', renderer: statusRenderer, sortable: true},
+				{header: "提交者", width: 50, dataIndex: 'user', sortable: true},
+				
+				{header: "生效日期", width: 50, dataIndex: 'start_time', renderer: Ext.util.Format.dateRenderer('Y-m-d H:i:s'), sortable: true},
+				{header: "失效日期", width: 50, dataIndex: 'end_time', renderer: Ext.util.Format.dateRenderer('Y-m-d H:i:s'), sortable: true},
+				{header: "提交时间", width: 50, dataIndex: 'create_time', renderer: Ext.util.Format.dateRenderer('Y-m-d H:i:s'), sortable: true},
+				{header: "快速同步状态", width: 75, dataIndex: 'sync_status',sortable: true,renderer:function(value,cellmeta,record){                  
+                    if(value==1){cellmeta.attr="style=background-color:red";return "新增";}
+                    if(value==2){cellmeta.attr="style=background-color:yellow";return "待同步";}
+                    if(value==3){
+                        var sync_modify_time = record.data['sync_modify_time'];
+                        cellmeta.attr="style=background-color:yellow";
+                        return "同步中";}
+                    if(value==4){cellmeta.attr="style=background-color:green";return "同步成功";}
+                    if(value==5){cellmeta.attr="style=background-color:red";return "同步失败";}
+                    
+                    var sync_modify_time = record.data['sync_modify_time'];
+                    //return Ext.util.Format.date(sync_modify_time, 'Y-m-d H:i:s');
+                    cellmeta.attr="style=background-color:red";
+                    return "数据错误";}},
+                {header: "同步信息", width: 75, dataIndex: 'sync_message'},
+                {header: "同步修改时间", width: 75, dataIndex: 'sync_modify_time', renderer: Ext.util.Format.dateRenderer('Y-m-d H:i:s')}               
+			],
+	        // paging bar on the bottom
+	        bbar: pagingBar
+			
+		});
+		// trigger the data store load
+    	store.load({params:{start:0, limit:pageSize}});
+
+    	//取得所选域名记录信息
+        function getCheckedIdList(){
+            var recs = recordGrid.getSelectionModel().getSelections();
+            var list = [];
+            if(recs.length == 0){
+                Ext.MessageBox.alert('提示','请选择要进行操作的记录！');
+            }else{
+                for(var i = 0 ; i < recs.length ; i++){
+                    var rec = recs[i];
+                    list.push(rec.get('id'));
+                }
+            }
+            return list;
+        }
+        function reload(){
+            store.load({params:{start:0, limit:pageSize}});
+        }
+		function doSync(){
+		    new_synchronize(reload);
+		}
+		function doCancel(){
+		    cancel_synchronize(reload);
+		}
+		
+		function showOnline(){
+		    var recordIdList = getCheckedIdList();
+            var num = recordIdList.length;
+            if(num == 0){
+                //Ext.MessageBox.alert("提示","请选择要操作的记录");
+                return;
+            }
+            Ext.MessageBox.confirm("提示","您确定要上线所选频道吗？",function(btnId){
+                if(btnId == 'yes')
+                    manageChannel(recordIdList,0);
+            })
+		}
+		
+		function showOffline(){
+		    var recordIdList = getCheckedIdList();
+            var num = recordIdList.length;
+            if(num == 0){
+                //Ext.MessageBox.alert("提示","请选择要操作的记录");
+                return;
+            }
+            Ext.MessageBox.confirm("提示","您确定要下线所选频道吗？",function(btnId){
+                if(btnId == 'yes')
+                    manageChannel(recordIdList,1);
+            })
+		}
+		
+		function manageChannel(recordIdList,status){
+		    var msg = "正在下线所选频道，请稍后";
+		    if(status==0){
+		        msg="正在上线所选频道，请稍后";
+		    }
+		    var alertInfo = "上线所选频道";
+            if(status==1){
+                alertInfo = "下线所选频道";
+            }
+            
+            var msgTip = Ext.MessageBox.show({
+                title:'提示',
+                width : 250,
+                msg:msg
+            });
+            Ext.Ajax.request({
+                url : 'channel_check.do?method=manageRecord',
+                params : {recordIdList : recordIdList.toString(),status:status},
+                method : 'POST',
+                success : function(response,options){
+                    msgTip.hide();
+                    var result = Ext.util.JSON.decode(response.responseText);
+                 
+                    if(result.success){
+                        //服务器端数据成功删除后，同步删除客户端列表中的数据
+                        store.load({params:{start:0, limit:pageSize}});
+                        Ext.Msg.alert('提示',alertInfo+'成功。');
+                    }else{
+                        Ext.Msg.alert('提示',alertInfo+'失败！');
+                    }
+                },
+                failure : function(response,options){
+                    msgTip.hide();
+                    Ext.Msg.alert('提示',alertInfo+'请求失败！');
+                }
+            });
+        }
+		
+    	  
+		function bindingKeyDown(){	    
+		    Ext.each(Ext.query(".tabclass"),function(item){
+		        item.onkeydown=function(evt){
+		            var keycode = getKeycode(evt);
+	                if(keycode==9){
+	                    stopEvent(evt);
+	                    insertAtCursor(item,'\t');
+	                }
+		        }
+		    });
+		}
+		
+		function checkLength(id){
+		    var word=document.getElementById(id).value;
+		    word=word.replace(/(^\s*)|(\s*$)/g, "");
+		    if(word.length==0)return false;
+		    return true;
+		}
+		
+//	       //这里放一个进度条
+//        var pbar1=null;
+//        var processPDiv = { 
+//            progressRate:0,
+//            progressCode:1,
+//            progresstimer:null,
+//            progressCount:0,
+//            getProgressRate:function(){               
+//                Ext.Ajax.request({
+//                    url : 'progress.do?method=getProgress&c='+(new Date().getTime()),
+//                    method : 'POST',
+//                    params:{tablename:'ubs_web_channel_manage',requestId:requestId},
+//                    async:false,
+//                    success : function(response,options){
+//                        var result;
+//                        eval("result="+response.responseText);
+//                        var success = result.success;
+//                        if(success){ 
+//                            processPDiv.progressRate = result.progress;
+//                            processPDiv.progressCode = result.code;
+//                        }
+//                    },
+//                    failure:function(response,options){
+//                        processPDiv.progressRate=-1;
+//                    }
+//                });
+//                return processPDiv.progressRate;
+//            },
+//            
+//            progressFunc:function(){
+//                if(pbar1==null){
+//                    var progressDiv = Ext.get("progress-div");
+//                    progressDiv.show();
+//                    
+//                    pbar1= new Ext.ProgressBar({ // 实例化进度条
+//                        renderTo : "progress-div",
+//                        width : 800, 
+//                        text : "同步进度...0%"
+//                    });
+//                }
+//                processPDiv.progressRate = processPDiv.getProgressRate(); 
+//                if(processPDiv.progressRate==-1){
+//                    if(processPDiv.progressCount<10){
+//                        processPDiv.progressCount++;
+//                        processPDiv.progresstimer=setTimeout(function(){processPDiv.progressFunc();},500);
+//                    }else{
+//                        clearTimeout(processPDiv.progresstimer);
+//                    }
+//                }else{
+//                    pbar1.updateProgress(processPDiv.progressRate/100.0);
+//                    pbar1.updateText("同步进度..."+processPDiv.progressRate+"%")
+//                    processPDiv.progresstimer=setTimeout(function(){processPDiv.progressFunc();},500);
+//                    if(processPDiv.progressCode==2||processPDiv.progressCode==3){
+//                        clearTimeout(processPDiv.progresstimer);
+//                        setTimeout(function(){
+//                            //执行完成的进度条去掉
+//                            processPDiv.clearPDiv();
+//                        },2000);
+//                        
+//                        if(dataId.length>0){
+//                            alert("10s之后发送前台更新请求，请稍候");
+//                            setTimeout(function(){
+//                                //执行完成的进度条去掉
+//                                updateFront(dataId);
+//                            },10000);
+//                        }
+//                        store.load({params:{start:0, limit:pageSize}});
+//                    }
+//                }
+//            },
+//            clearPDiv:function(){
+//                var progressDiv = Ext.get("progress-div");
+//                progressDiv.hide();
+//            },
+//            hidePDiv:function(){
+//                if(processPDiv.progresstimer!=null)
+//                    clearTimeout(processPDiv.progresstimer);
+//                var progressDiv = Ext.get("progress-div");
+//                progressDiv.hide();
+//            },
+//            init:function(){
+//                var progressDiv = Ext.get("progress-div");
+//                if(progressDiv){
+//                    var children = progressDiv.dom.children;
+//                    var len = children.length;
+//                    for(var i=0;i<len;i++)
+//                    progressDiv.dom.removeChild(children[i]);
+//                }
+//                pbar1 = null;
+//                processPDiv.progressRate = 0;
+//                processPDiv.progressCode = 1;
+//                processPDiv.progresstimer=null;
+//                processPDiv.progressFunc();
+//                
+//            }
+//        }
+//        var requestId=null;
+//        var dataId=null;
+//        function cancel_synchronize(){
+//            var confirmTip = Ext.MessageBox.confirm("提示","您确定取消同步操作吗？",function(){
+//                Ext.Ajax.request({
+//                    url : 'progress.do?method=canceldeploy',
+//                    params : {deploytype : 'query',tablename:'ubs_web_channel_manage',requestId:requestId},
+//                    method : 'POST',
+//                    success : function(response,options){
+//                        var result;
+//                        eval("result="+response.responseText);
+//                        var success = result.success;
+//                        if(success){ 
+//                            processPDiv.hidePDiv();
+//                        }
+//                        Ext.Msg.alert('提示',result.msg);
+//                        store.load({params:{start:0, limit:pageSize}});
+//                    }
+//                });               
+//            });
+//        }
+//		//线上同步词表
+//		function new_synchronize(){
+//			var msgTip = Ext.MessageBox.show({
+//				title:'提示',
+//				width : 250,
+//				msg:'正在向线上发送推荐词同步信号，请稍候......'
+//			});
+//			Ext.Ajax.request({
+//				url : 'progress.do?method=newdeploy',
+//				params : {deploytype : 'hint',tablename:'ubs_web_channel_manage',requestType:"wap"},
+//				method : 'POST',
+//				success : function(response,options){
+//                    msgTip.hide();
+//                    var result;
+//                    eval("result="+response.responseText);
+//                    var success = result.success;
+//                    if(success){ 
+//                        requestId = result.requestId;
+//                        dataId = result.dataId;
+//                        processPDiv.init();
+//                    }
+//                    Ext.Msg.alert('提示',result.msg);
+//                    store.load({params:{start:0, limit:pageSize}}); 
+//				}
+//			});
+//		}
+		
+		//开始查询代码
+		function query(tag){
+			var query_source = $("input[name=query_source]:checked").val();
+			var query_status = $("input[name=query_status]:checked").val();
+			var query_sub_user = $("#query_sub_user").val();
+			
+			var condition=[],path="channel_check.do";
+			
+			condition.push("method=getRecordList");
+			if(tag){
+			    condition.push("query_status="+query_status);
+			    condition.push("query_source="+query_source);
+			    condition.push("query_sub_user="+query_sub_user);
+			}else{
+			    $("#query_sub_user").val("");
+			}
+			var url=path+"?"+condition.join("&");
+
+			//导出条件
+			//exportConditionUrl = "channel_check.do?method=getRecordList&query_keyword="+escape(query_keyword)+"&query_keyword_matchType="+query_keyword_matchType+ "&query_sub_user=" + escape(query_sub_user);
+			
+			store.proxy.conn.url = url;
+			store.load({params:{start:0, limit:pageSize}});
+		}
+		
+	    dr.render('dr');
+
+	  	
+	});
+</script>
+<body>
+<div id="dr" style="width:100%;height:20%;"></div>
+<div id="progress-div" style="width:100%;height:4%;display:none"></div>
+<div id='grid-div' style="width:100%; height:63%;"></div>
+</body>
+</html>

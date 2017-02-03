@@ -1,0 +1,88 @@
+// JavaScript Document
+Ext.ux.Chosen = Ext.extend(Ext.form.Field,{
+    msWidth:400,
+    msHeight:50,
+    width: 0,
+    height: 0,
+    listHeight: 0,
+    className : '',
+    name: "",
+    fieldLabel: "",
+    displayField: "",
+    valueField: "",
+    dataStore: null,
+    multiple: false,
+    placeholder: "请选择...",
+    onRender: function(ct, position){
+        Ext.ux.Chosen.superclass.onRender.call(this, ct, position);
+        var store = this.dataStore, me=this;
+        this.select = this.container.createChild({
+            tag : "select",
+            value : "",
+            multiple: this.multiple,
+            "data-placeholder": this.placeholder
+        });
+        this.el.setStyle("display", "none");
+        if(this.msHeight){
+            this.container.setStyle("min-height", this.msHeight + "px");
+        }
+        if(this.msWidth){
+            this.container.setStyle("min-width", this.msWidth + "px");
+        }
+        if(this.height){
+            this.select.setStyle("height", this.height + "px");
+        }
+        if(this.width){
+            this.select.setStyle("width", this.width + "px");
+        }
+        if(store && store.data){
+            for (var i = 0; store.data &&  i < store.data.length; i++) {
+                var record = store.getAt(i);
+                var option = this.select.createChild({
+                    tag: "option",
+                    value: record.data[this.valueField]
+                });
+                option.update(record.data[this.displayField]);
+            }
+        }
+    },
+    afterRender: function(){
+        var me = this;
+        if(this.select && this.select.id && document.getElementById(this.select.id)){
+            $("#" + this.select.id).chosen({
+                search_contains: true,
+                no_results_text: "当前匹配无结果O(∩_∩)O~"
+            }).change(function(){
+                var value = $(this).val();
+                if(value && $.isArray(value)){
+                    value = value.join(",");
+                }
+                if(me.el && me.el.dom){
+                    me.el.dom.value = value;
+                }
+            });
+            if(this.listHeight){
+                this.container.createChild({
+                    tag: "div",
+                    style: "width: 100%; height: " + this.listHeight + "px"
+                });
+            }
+        }
+    },
+    reset: function(){
+        if(this.select && this.select.id && document.getElementById(this.select.id)){
+            $("#" + this.select.id).val('').trigger("chosen:updated");
+        }
+        if(this.el && this.el.dom){
+            this.el.dom.value = "";
+        }
+    },
+    getValue: function(){
+        if(this.select && this.select.id && document.getElementById(this.select.id)){
+            return this.select.value;
+        }
+        return '';
+    },
+    initValue:Ext.emptyFn
+});
+Ext.reg('chosen', Ext.ux.Chosen);

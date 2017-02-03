@@ -1,0 +1,113 @@
+<%@ page language="java" contentType="text/html; charset=GBK" pageEncoding="GBK"%>
+<%@page import="com.sohu.frontweb.base.action.UmisAction"%>
+<html>
+<head><meta http-equiv="Content-Type" content="text/html; charset=GBK"><title>URL白名单列表</title></head>
+<script type="text/javascript">
+	Ext.onReady(function(){
+		var store = new Ext.data.Store({
+			reader: new Ext.data.XmlReader({
+				totalRecords: "results",
+				record: "Whiteurl"
+				},
+				Ext.data.Record.create([
+					{name: 'rule_id'},
+					{name: 'data'},
+					{name: 'secret_level'},
+					{name: 'match_mode'},
+					{name: 'url_level_set_id'},
+					{name: 'search_type'},
+					{name: 'ctime'},
+					<%if(UmisAction.UMIS_SECADMIN_USE_NEW_SYNC){%>
+                    {name: 'utime'},
+                    {name: 'sync_status'},
+                    {name: 'sync_message'},
+                    {name: 'sync_modify_time',type:'date',dateFormat:'Y-m-d H:i:s'}
+                    <%}else{%>
+                    {name: 'utime'} 
+                    <%}%>
+				])
+			),
+			proxy : new Ext.data.HttpProxy({
+				url : 'secadmin_whiteurl.do?method=getRecordList'
+			}),
+			remoteSort: true
+		})
+    	var pagingBar = new Ext.PagingToolbar({
+	        pageSize: 18,
+	        store: store,
+	        displayInfo: true,
+	        displayMsg: '显示 {0} - {1} , 共 {2} 条记录',
+	        emptyMsg: '没有任何记录',
+	        items:[{text : '导出',iconCls:'option',handler : exportExcel}]
+    	});
+    	var recordGrid = new Ext.grid.GridPanel({
+    		applyTo : 'grid-div',
+    		frame:true,
+    		loadMask: true,
+    		store: store,
+    		viewConfig : {
+    			autoFill : true
+    		},
+    		columns: [
+    			new Ext.grid.RowNumberer({
+    				header : '行号',
+    				width : 40
+    			}),
+    				{header: '规则编号', width: 40, dataIndex: 'rule_id', sortable: true},
+    				{header: '数据项', width: 40, dataIndex: 'data', sortable: true},
+    				{header: '保密级别', width: 40, dataIndex: 'secret_level', sortable: true},
+    				{header: '匹配模式', width: 40, dataIndex: 'match_mode', sortable: true},
+    				{header: 'URL级别集合编号', width: 40, dataIndex: 'url_level_set_id', sortable: true},
+    				{header: '搜索类型', width: 40, dataIndex: 'search_type', sortable: true},
+    				{header: '创建时间', width: 40, dataIndex: 'ctime', sortable: true},
+    				<%if(UmisAction.UMIS_SECADMIN_USE_NEW_SYNC){%>
+                    {header: '最后更新', width: 40, dataIndex: 'utime', sortable: true},
+                    {header: "快速同步状态", width: 75, dataIndex: 'sync_status',sortable: true,renderer:function(value,cellmeta,record){                  
+                        if(value==1){cellmeta.attr="style=background-color:red";return "新增";}
+                        if(value==2){cellmeta.attr="style=background-color:yellow";return "待同步";}
+                        if(value==3){
+                            var sync_modify_time = record.data['sync_modify_time'];
+                            cellmeta.attr="style=background-color:yellow";
+                            return "同步中";}
+                        if(value==4){cellmeta.attr="style=background-color:green";return "同步成功";}
+                        if(value==5){cellmeta.attr="style=background-color:red";return "同步失败";}
+                        
+                        var sync_modify_time = record.data['sync_modify_time'];
+                        //return Ext.util.Format.date(sync_modify_time, 'Y-m-d H:i:s');
+                        cellmeta.attr="style=background-color:red";
+                        return "数据错误";}},
+                    {header: "同步信息", width: 75, dataIndex: 'sync_message'},
+                    {header: "同步修改时间", width: 75, dataIndex: 'sync_modify_time', renderer: Ext.util.Format.dateRenderer('Y-m-d H:i:s')}
+                    <%}else{%>
+                    {header: '最后更新', width: 40, dataIndex: 'utime', sortable: true}
+                    <%}%>
+    		],
+    		bbar: pagingBar
+    	});
+		function exportExcel(){
+			var msgTip = Ext.MessageBox.show({
+				title:'提示',
+				width : 250,
+				msg:'正在导出URL白名单记录信息请稍候（上限1w条）......'
+			});
+			Ext.Ajax.request({
+				url : 'secadmin_whiteurl.do?method=exportRecord',
+				method : 'POST',
+				success : function(response,options){
+					msgTip.hide();
+					window.location = '<%=request.getContextPath()%>/exportExcel/blacklist_secadmin_whiteurl.xls';
+					var result = Ext.util.JSON.decode(response.responseText);
+				},
+				failure : function(response,options){
+					msgTip.hide();
+					Ext.Msg.alert('提示','导出URL白名单记录请求失败！');
+				}
+			});
+		}
+    	store.load({params:{start:0, limit:18}});
+	});
+</script>
+<body>
+<div id='grid-div' style="width:100%; height:100%;"/>
+</body>
+</html>

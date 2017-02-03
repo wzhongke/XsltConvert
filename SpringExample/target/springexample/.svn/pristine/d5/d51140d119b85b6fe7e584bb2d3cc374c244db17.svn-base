@@ -1,0 +1,1653 @@
+<%@ page language="java" contentType="text/html; charset=GBK"
+    pageEncoding="GBK"%>
+<%@ page import="
+java.util.ArrayList,
+java.util.HashMap,
+com.sohu.frontweb.ubs.service.BlacklistService,
+com.sohu.frontweb.base.action.UmisAction,
+com.sohu.frontweb.ubs.data.*;
+
+"%>  
+ 
+<% 
+	String table = request.getParameter("table");
+	System.out.println(table);
+	BlackTable thisTable = BlacklistService.TABLE_MAP.get(table);
+	ArrayList<BlackColumn> columnList = thisTable.getColumnList();
+	System.out.println("columnList.size:"+columnList.size());
+	
+	String user = (String)session.getAttribute("user");
+    String[] userArr = null;
+    if(user!=null)
+        userArr = user.split("@");
+    String fieldLabel= "";
+    for(BlackColumn bc : columnList){
+        fieldLabel+= bc.getName()+"("+bc.getCnName()+")";
+        if(bc.getTypeName().equals("select")||bc.getTypeName().equals("radio")){
+            fieldLabel += "&nbsp;<font color=blue>候选值[";
+            for(BlackColumnItem item :bc.getItems()){
+                fieldLabel += "{value："+ item.getValue()+" ,text:"+item.getText()+"},";
+            }
+            fieldLabel += "]</font>";
+        }       
+        
+        fieldLabel += "<br>";
+    }
+    
+%><%@include file="_column.jsp"%>
+<%@include file="_search.jsp"%>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=GBK">
+	<title>通用黑名单列表</title>
+	<script type="text/javascript">
+	tablename = "<%=table%>";
+	syncHubType = "<%=thisTable.getRequestType()%>";
+	pageSize = 18;
+	</script>
+	<script type="text/javascript" src="/js/quickSync.js"></script>
+	<script type="text/javascript" src="/js/tabinsert.js"></script>
+	
+</head>
+<script type="text/javascript">
+	var user = "<%=userArr[0]%>";
+
+	Ext.namespace('Ext.exampledata');
+	Ext.onReady(function(){
+		
+		//创建新增或单独修改表记录信息的form表单
+		Ext.QuickTips.init();
+		Ext.form.Field.prototype.msgTarget = 'side';//统一指定错误信息提示方式
+		//定义数据集对象
+		var store = new Ext.data.Store({//配置分组数据集
+			reader: new Ext.data.XmlReader({
+				totalRecords: "total",
+				record: "item",
+				id: "id"
+			},
+			Ext.data.Record.create([
+				{name: 'id'},
+				<%
+				for(BlackColumn bc : columnList){
+					out.println("{name: '"+bc.getName()+"'},");
+				}
+				%>
+				{name: 'url'},
+				{name: 'weight'},
+				{name: 'start_time', type: 'date', dateFormat: 'Y-m-d H:i:s'},
+				{name: 'end_time', type: 'date', dateFormat: 'Y-m-d H:i:s'},
+				{name: 'user'},
+				{name: 'create_time', type: 'date', dateFormat: 'Y-m-d H:i:s'},				
+				<%
+				if(thisTable.isShowQuickSync()){
+				%>
+				{name: 'modify_time', type: 'date', dateFormat: 'Y-m-d H:i:s'},
+				{name: 'sync_status', type: 'int'},
+                {name: 'sync_message'},
+                {name: 'sync_modify_time', type: 'date', dateFormat: 'Y-m-d H:i:s'}
+                <%}else{%>
+                {name: 'modify_time', type: 'date', dateFormat: 'Y-m-d H:i:s'}
+                <%}%>
+				
+			])
+			),
+			proxy : new Ext.data.HttpProxy({
+				url : 'ubs.do?method=getBlacklist&table=<%=table%>'
+			}),
+	  		sortInfo: {field: 'id', direction: 'DESC'},
+	  		remoteSort: true
+		})
+		
+		
+		<%
+		String id = request.getParameter("id");
+		if(id!= null &&!id.isEmpty())			
+			out.println("store.proxy.conn.url = 'ubs.do?method=getBlacklist&table="+table+"&id="+id+"';");
+		%>
+		
+    	store.load({params:{start:0, limit:pageSize}});
+    	
+    	<%
+    	if(!thisTable.getSumColumn().isEmpty())
+    		out.println("reloadSum();");
+    	%>
+    	
+
+
+		<%//根据权限信息显示工具栏
+		StringBuffer toolbar_str = new StringBuffer();
+		
+		//非表单申请
+		if(!thisTable.getType().equals("apply")){
+			if( ( (Integer)session.getAttribute(table+"_add") )==1)
+	    		toolbar_str.append("{text : '新增',iconCls:'add',handler : showAdd},");
+	    	//if(  ( (Integer)session.getAttribute(table+"_batchadd") )==1)
+	    	if( ( (Integer)session.getAttribute(table+"_add") )==1)
+	    		toolbar_str.append("{text : '批量新增',iconCls:'batch-add',handler : showBatchAdd},");
+	    	if(  ( (Integer)session.getAttribute(table+"_modify") )==1)
+	    		toolbar_str.append("{text : '修改',iconCls:'option',handler : showModify},");
+	    	if(  ( (Integer)session.getAttribute(table+"_delete") )==1)
+	    		toolbar_str.append("{text : '删除',iconCls:'remove',handler : showDelete},");
+	    	if(  ( (Integer)session.getAttribute(table+"_delete") )==1&&!thisTable.getBatchColumn().isEmpty())
+                toolbar_str.append("{text : '批量删除',iconCls:'batch-remove',handler : showBatchDelete},");
+	    	/*if(  ( (Integer)session.getAttribute(table+"_clear") )==1)
+	    		toolbar_str.append("{text : '清理过期数据',iconCls:'remove',handler : showClear},");*/
+	    	
+	    	if(!thisTable.getSyncShell().isEmpty()&&(( (Integer)session.getAttribute(table+"_add") )==1)){
+	    		toolbar_str.append("{text : '数据上线',iconCls:'batch-remove',handler : synchronize},");	
+	    	}
+	    	
+	    	if(thisTable.isShowQuickSync()){
+	            //有同步需要的对应加上 快速同步流程
+                toolbar_str.append("{text : '快速同步数据',iconCls:'batch-remove',handler : doSync},"); 
+                toolbar_str.append("{text : '取消同步',iconCls:'batch-remove',handler : doCancel},");
+	    	}
+	    	if(  !thisTable.isSelfConfig()&&( (Integer)session.getAttribute(table+"_modify") )==1)
+                toolbar_str.append("{text : '续约',iconCls:'option',handler : extend},");
+		}
+		//表单申请
+		else{
+			toolbar_str.append("{text : '新增',iconCls:'add',handler : showAdd},");
+	    	if(  ( (Integer)session.getAttribute(table+"_check") )==1)
+	    		toolbar_str.append("{text : '审核',iconCls:'option',handler : showModify},");
+	    	else
+	    		toolbar_str.append("{text : '查看',iconCls:'option',handler : showModify},");
+	    	
+	    	if(  ( (Integer)session.getAttribute(table+"_check") )==1)
+	    		toolbar_str.append("{text : '删除',iconCls:'remove',handler : showDelete},");
+	    
+		}
+	    
+	    toolbar_str.append("{text : '接口说明',iconCls:'option',handler : showInterface},");
+	    if(thisTable.isShowCleanInvalid()){
+	    	toolbar_str.append("{text : '清理过期数据',iconCls:'remove',handler : showClear},");
+	    }
+
+	    if(toolbar_str.toString().length()>0)
+	    	toolbar_str.deleteCharAt(toolbar_str.length()-1);
+	    %>
+		//创建工具栏组件
+		var toolbar = new Ext.Toolbar([
+		    <%=toolbar_str.toString()%>
+		]);
+	
+    	//创建分页工具栏
+    	var pagingBar = new Ext.PagingToolbar({
+    		pageSize: pageSize,
+	        store: store,
+	        displayInfo: true,
+	        displayMsg: '显示 {0} - {1} , 共 {2} 条记录',
+	        emptyMsg: "没有任何记录",
+	        items:['-']
+    	});
+		//创建Grid表格组件
+		var cb = new Ext.grid.CheckboxSelectionModel();
+
+/*****************************/
+				<%
+			
+		out.println(mapSb.toString());		
+		out.println(storeSb.toString());	
+		out.println(renderSb.toString());	
+
+
+		/*
+		if(thisTable.isSelfConfig() && searchBuf.length()>0){
+		
+			
+			searchBuf.append("{\n");
+			searchBuf.append("xtype:'hidden',\n");
+			searchBuf.append("id : 'query_for_end',\n");
+			searchBuf.append("name : 'query_for_end',\n");
+			searchBuf.append("}\n");
+			
+			searchBuf.deleteCharAt(searchBuf.length()-1);
+		}*/
+		
+		%>
+/*****************************/	
+
+
+
+		//开始查询表单部分
+		var dr = new Ext.FormPanel({
+		    xtype:'form',
+	    	labelWidth: 125,
+	        frame: true,
+	  	  	bodyStyle:'padding:5px 5px 0',
+	  	 	autoScroll: true,
+	  	  	autoWidth: true,
+	  	  	<%
+	  	  	if(searchBuf.length()==0)
+	  	  		out.println("hidden:true,");
+	  	  	%>	        
+	        defaults: {width: 175},
+	      	//增加表单键盘事件
+	        keys:[
+	         {
+	             key: [10,13],
+	             fn:query
+	         } ],
+	        items: [
+	        <%
+	        
+	        out.println(searchBuf.toString());  
+	        %>
+			  {
+        	    layout:'column',
+        	    width : 620,
+        	    border:false,
+        	    hidden:<%=thisTable.isSelfConfig()?"true":"false"%>,
+        	    items:[
+        	        {
+        	            columnWidth:.5,
+        	            layout: 'form',
+        	            border:false,
+        	            items: [{
+        	            	xtype:'textfield',
+    						id : 'query_start_time_1',
+    						name : 'query_start_time_1',
+    						fieldLabel:'生效日期',
+    						cls:'Wdate'
+        	            }]
+        	        },
+        	        {
+        	            columnWidth:.5,
+        	            layout: 'form',
+        	            border:false,
+        	            items: [{
+        	            	xtype:'textfield',
+    						id : 'query_start_time_2',
+    						name : 'query_start_time_2',
+    						fieldLabel:'到',
+    						cls:'Wdate'
+        	            }]
+        	        }
+        	      ]
+	        	},
+	        	{
+	        	    layout:'column',
+	        	    width : 620,
+	        	    border:false,
+	        	    hidden:<%=thisTable.isSelfConfig()?"true":"false"%>,
+	        	    items:[
+	        	        {
+	        	            columnWidth:.5,
+	        	            layout: 'form',
+	        	            border:false,
+	        	            items: [{
+	        	            	xtype:'textfield',
+	    						id : 'query_end_time_1',
+	    						name : 'query_end_time_1',
+	    						fieldLabel:'截止日期',
+	    						cls:'Wdate'
+	        	            }]
+	        	        },
+	        	        {
+	        	            columnWidth:.5,
+	        	            layout: 'form',
+	        	            border:false,
+	        	            items: [{
+	        	            	xtype:'textfield',
+	    						id : 'query_end_time_2',
+	    						name : 'query_end_time_2',
+	    						fieldLabel:'到',
+	    						cls:'Wdate'
+	        	            }]
+	        	        }
+	        	      ]
+	        	}, 
+	        	
+	        	{
+	        		xtype:'hidden',
+	        		id : 'query_for_end',
+	        		name : 'query_for_end'
+	        	}
+	        	           
+            ],
+			buttons:[
+				{
+					text : '模糊查询',
+					handler : function(){
+						query(true,false);
+					}
+				},
+                {
+                    text : '精确查询',
+                    handler : function(){
+                        query(true,true);
+                    }
+                },
+				{
+					text : '返回',
+					handler : function(){
+						query(false);
+					}
+				}
+			]
+	      });
+/**********************************************/	
+		var recordGrid = new Ext.grid.GridPanel({
+			applyTo : 'grid-div',
+			tbar : toolbar,
+			frame:true,
+			loadMask: true,
+			autoScroll: true,
+			autoWidth :true,			
+			//width: 960,
+			store: store,
+			viewConfig : {
+				autoFill : true
+			},
+			sm : cb,
+			columns: [//配置表格列
+				/*
+		        new Ext.grid.RowNumberer({
+					header : '行号',
+					width : 40
+				}),*/
+				//表格行号组件
+				cb,
+				{header: "编号", width: 40, dataIndex: 'id', sortable: true},
+				<%
+				StringBuffer thisColumnSb = new StringBuffer();
+				for(BlackColumn bc : columnList){
+					
+					//如果是申请忽略duration字段
+					if(thisTable.getType().equals("apply")&&bc.getName().equals("duration"))
+						continue;
+					
+					//if(bc.getItems().size()==0 && bc.getDataSrc().isEmpty() ){
+					//	thisColumnSb.append("{header: '"+bc.getCnName()+"', width: "+ bc.getSize() +", dataIndex: '"+ bc.getName() +"'},");
+					//}
+					if(bc.getRenderer()!=null) { 
+						thisColumnSb.append("{header: '"+bc.getCnName()+"', width: "+ bc.getSize()+", dataIndex: '"+ bc.getName() +"',sortable: true, renderer: function(val){"+bc.getRenderer()+"}},");
+					}else if (bc.getItems().size()!=0 || !bc.getDataSrc().isEmpty() ){				
+						thisColumnSb.append("{header: '"+bc.getCnName()+"', width: "+ bc.getSize() +", dataIndex: '"+ bc.getName() +"', sortable: true,renderer: "+ bc.getName() +"Render},");
+					}else  {
+						thisColumnSb.append("{header: '"+bc.getCnName()+"', width: "+ bc.getSize() +", dataIndex: '"+ bc.getName() +"',sortable: true},");
+					}	
+				} 
+				//System.out.println(thisColumnSb);
+				
+				if(thisTable.isSelfConfig()){
+				    if(!thisTable.isShowQuickSync()){
+				        thisColumnSb.deleteCharAt(thisColumnSb.length()-1);
+				        out.println(thisColumnSb.toString());
+				    }else{
+    				    out.println(thisColumnSb.toString());
+    				    if(thisTable.isShowQuickSync()){
+    				      %>
+    				      {header: "快速同步状态", width: 75, dataIndex: 'sync_status',sortable: true,renderer:function(value,cellmeta,record){                  
+    		                    if(value==1){cellmeta.attr="style=background-color:red";return "新增";}
+    		                    if(value==2){cellmeta.attr="style=background-color:yellow";return "待同步";}
+    		                    if(value==3){
+    		                        var sync_modify_time = record.data['sync_modify_time'];
+    		                        cellmeta.attr="style=background-color:yellow";
+    		                        return "同步中";}
+    		                    if(value==4){cellmeta.attr="style=background-color:green";return "同步成功";}
+    		                    if(value==5){cellmeta.attr="style=background-color:red";return "同步失败";}
+    		                    
+    		                    var sync_modify_time = record.data['sync_modify_time'];
+    		                    //return Ext.util.Format.date(sync_modify_time, 'Y-m-d H:i:s');
+    		                    cellmeta.attr="style=background-color:red";
+    		                    return "数据错误";}},
+    		                {header: "同步信息", width: 75, dataIndex: 'sync_message'},
+    		                {header: "同步修改时间", width: 75, dataIndex: 'sync_modify_time', renderer: Ext.util.Format.dateRenderer('Y-m-d H:i:s')}		                
+    				      <%  
+    				    }
+				    }
+					
+				}else{
+    				out.println(thisColumnSb.toString());
+    				%>				
+    				{header: "生效时间", width: 60, dataIndex: 'start_time',renderer: Ext.util.Format.dateRenderer('Y-m-d H:i:s')},
+    				{header: "失效时间", width: 60, dataIndex: 'end_time', renderer: Ext.util.Format.dateRenderer('Y-m-d H:i:s')},
+    				{header: "提交者", width: 80, dataIndex: 'user'},
+    				{header: "创建时间", width: 60, dataIndex: 'create_time', renderer: Ext.util.Format.dateRenderer('Y-m-d H:i:s')},				
+    				<%
+    				if(thisTable.isShowQuickSync()){
+    				%>
+    				{header: "更新时间", width: 60, dataIndex: 'modify_time', renderer: Ext.util.Format.dateRenderer('Y-m-d H:i:s')},
+    				{header: "快速同步状态", width: 75, dataIndex: 'sync_status',sortable: true,renderer:function(value,cellmeta,record){                  
+                        if(value==1){cellmeta.attr="style=background-color:red";return "新增";}
+                        if(value==2){cellmeta.attr="style=background-color:yellow";return "待同步";}
+                        if(value==3){
+                            var sync_modify_time = record.data['sync_modify_time'];
+                            cellmeta.attr="style=background-color:yellow";
+                            return "同步中";}
+                        if(value==4){cellmeta.attr="style=background-color:green";return "同步成功";}
+                        if(value==5){cellmeta.attr="style=background-color:red";return "同步失败";}
+                        
+                        var sync_modify_time = record.data['sync_modify_time'];
+                        //return Ext.util.Format.date(sync_modify_time, 'Y-m-d H:i:s');
+                        cellmeta.attr="style=background-color:red";
+                        return "数据错误";}},
+                    {header: "同步信息", width: 75, dataIndex: 'sync_message'},
+                    {header: "同步修改时间", width: 75, dataIndex: 'sync_modify_time', renderer: Ext.util.Format.dateRenderer('Y-m-d H:i:s')}
+    				<%}else{%>
+    				{header: "更新时间", width: 60, dataIndex: 'modify_time', renderer: Ext.util.Format.dateRenderer('Y-m-d H:i:s')}
+    				<%}
+				}%>
+			],
+			
+	        // paging bar on the bottom
+	        bbar: pagingBar
+			
+		});
+
+
+		
+		var inputForm = new Ext.FormPanel({
+			name:"input",
+			labelSeparator : ":",
+			frame:true,
+			border:false,
+			autoWidth:true,
+			autoHeight: true,
+			labelWidth : 130, 
+			items : [
+				<%=columnSb.toString()%>
+              {        
+                  xtype:'textfield',
+                    width : 150,
+                    hidden:<%=thisTable.isSelfConfig()?"true":"false"%>,
+                    <%=thisTable.isSelfConfig()?"labelStyle:\"display:none\",":""%>
+                    allowBlank : false,
+                    id : 'start_time_string',
+                    name : 'start_time_string',
+                    fieldLabel:'生效日期',
+                    cls:'Wdate',
+                    value: getTimeAfterNow(0)                 
+            },
+				{
+			        fieldLabel: '有效期',
+			        xtype:'radiogroup',
+			        hidden:<%=thisTable.isSelfConfig()?"true":"false"%>,
+		            <%=thisTable.isSelfConfig()?"labelStyle:\"display:none\",":""%>
+			        columns: [100, 100],
+			        items: [{
+			            boxLabel: '3个月',
+			            name: 'modify_invalidate_time',
+			            id: 'stinvalidate3',
+			            inputValue: '3',
+			            listeners:{
+			                'check':{
+			                    fn:function(event){
+			                        if(event.checked){
+			                            setInvalidateTime(3);
+			                        }			                        
+			                    },
+			                    scope:this,
+			                }
+			            }
+
+			        }, 
+			        {
+			            boxLabel: '6个月',
+			            name: 'modify_invalidate_time',
+			            id: 'stinvalidate6',
+			            inputValue: '6',
+			            listeners:{
+                            'check':{
+                                fn:function(event){
+			                        if(event.checked){
+			                            setInvalidateTime(6);
+			                        }
+                                },
+                                scope:this,
+                            }
+                        }
+			        },{
+                        boxLabel: '不限',
+                        name: 'modify_invalidate_time',
+                        id: 'stinvalidate0',
+                        inputValue: '0',
+                        listeners:{
+                            'check':{
+                                fn:function(event){
+                                    if(event.checked){
+                                        setInvalidateTime(0);
+                                    }
+                                },
+                                scope:this,
+                            }
+                        }
+                    }]
+			    },
+				
+                {
+                	xtype:'textfield',
+                	width : 150,
+                	hidden:<%=(thisTable.isSelfConfig())?"true":"false"%>,
+                	<%=(thisTable.isSelfConfig())?"labelStyle:\"display:none\",":""%>
+                	allowBlank : false,
+                	id : 'end_time_string',
+					name : 'end_time_string',
+					fieldLabel:'失效日期',
+					cls:'Wdate',
+					value: '2050-01-01 00:00:00'
+                },
+                
+                {
+					xtype:'hidden',
+					id: 'id',
+					name : 'id'
+				}
+			],
+			buttons:[
+				{
+					text : '提交',
+					id : 'btn_submmit',
+					handler : submitForm
+				},
+				{
+					text : '关闭',
+					handler : function(){
+						win.hide();
+					}
+				}
+			]
+		});
+		
+		
+		//批量添加
+		var  inputBatchForm = new Ext.form.FormPanel({
+			id:"inputBatch",
+			name:"inputBatch",
+			labelSeparator : ":",
+			frame:true,
+			border:false,
+			autoHeight: true,
+			labelWidth : 230, 
+			<%if(thisTable.getBatchType().equals("file")){%>
+			fileUpload:true,
+			<%}%>
+			items : [
+				<%							
+				if(!thisTable.getBatchColumn().isEmpty()){
+					BlackColumn thisColumn = bcMap.get(thisTable.getBatchColumn());
+					if(thisTable.getBatchType().equals("file")){
+			   %>
+               {
+                    xtype:'textfield',
+                    cls:'tabclass',
+                    width : 460,
+                    //height: 150,
+                    allowBlank : false,
+                    blankText : '内容不能为空',
+                    name : 'batch_<%=thisTable.getBatchColumn()%>',
+                    id : 'batch_<%=thisTable.getBatchColumn()%>',
+                    fieldLabel:'<%=thisColumn.getCnName()%>',
+                    inputType:'file'
+                },
+				<%    
+					}else{
+				%>
+				{
+					xtype:'textarea',
+					cls:'tabclass',
+					width : 460,
+					height: 150,
+					allowBlank : false,
+					blankText : '内容不能为空',
+					name : 'batch_<%=thisTable.getBatchColumn()%>',
+					id : 'batch_<%=thisTable.getBatchColumn()%>',
+					fieldLabel:'<%=thisColumn.getCnName()%>'		
+				},
+				<%
+					}
+				out.println(batchColumnSb.toString());	
+				%>
+				{
+                	xtype:'textfield',
+                	width : 150,
+                	hidden:<%=thisTable.isSelfConfig()?"true":"false"%>,
+                	<%=thisTable.isSelfConfig()?"labelStyle:\"display:none\",":""%>
+                	allowBlank : false,
+                	id : 'batch_start_time_string',
+					name : 'batch_start_time_string',
+					fieldLabel:'生效日期',
+					cls:'Wdate',
+					value: getTimeAfterNow(0)
+                },{
+                	xtype:'textfield',
+                	width : 150,
+                	hidden:<%=(thisTable.isSelfConfig())?"true":"false"%>,
+                	<%=(thisTable.isSelfConfig())?"labelStyle:\"display:none\",":""%>
+                	allowBlank : false,
+                	id : 'batch_end_time_string',
+					name : 'batch_end_time_string',
+					fieldLabel:'失效日期',
+					cls:'Wdate',
+					value: '2050-01-01 00:00:00'
+                }				
+				<%}else{
+				    if(thisTable.getBatchType().equals("file")){%>				    
+    				    {
+    	                    xtype:'textfield',
+    	                    cls:'tabclass',
+    	                    width : 460,
+    	                    //height: 150,
+    	                    allowBlank : false,
+    	                    blankText : '内容不能为空',
+    	                    name : 'batchContent',
+    	                    id : 'batchContent',
+    	                    fieldLabel:'<%=fieldLabel%><font color=red>(中间以tab分隔,每个数据占1行，以回车分隔)</font>',
+    	                    inputType:'file'
+    	                }
+				    <%}else{%>   				
+        				{
+        					xtype:'textarea',
+        					cls:'tabclass',
+        					width : 460,
+        					height: 400,
+        					allowBlank : false,
+        					blankText : '内容不能为空',
+        					name : 'batchContent',
+        					id : 'batchContent',
+        					fieldLabel:'<%=fieldLabel%><font color=red>(中间以tab分隔,每个数据占1行，以回车分隔)</font>',
+        					enableKeyEvents : true,
+        					listeners:{
+        						//keypress:{fn:function(txtcomp, eventobj ){Ext.getCmp('btn_submmit').disable();}},
+        						change:{fn:function(txtcomp, eventobj ){
+        							//var anchor_var = Ext.getCmp('anchor').getValue();
+        							//if( anchor_var!=''){
+        								//后台请求二：到库中去取已有数据
+        								//if( keyword_var!='')
+        								//{
+        									//loadFormKeywordUrl(keyword_var,url_var);
+        								//}
+        								//后台请求一：给出此url是否已被干预过其他词的提示
+        								//showOtherKeywordTip(url_var);
+        							//}
+        						}}//change ends
+        					}
+        				}
+				<%}}%>
+				,
+				<%if(!thisTable.isSelfConfig()){%>
+//				{
+//	                fieldLabel: '有效期',
+//	                xtype:'radiogroup',
+//	                columns: [60, 60,60],
+//	                items: [{
+//                        boxLabel: '不限期',
+//                        name: 'modify_invalidate_time',
+//                        id: 'stinvalidate0',
+//                        checked:true,
+//                        inputValue: '0',
+//                        }, {
+//	                    boxLabel: '3个月',
+//	                    name: 'modify_invalidate_time',
+//	                    id: 'stinvalidate3',
+//	                    inputValue: '3',
+//                        },{
+//	                    boxLabel: '6个月',
+//	                    name: 'modify_invalidate_time',
+//	                    id: 'stinvalidate6',
+//	                    inputValue: '6',
+//	                }]
+//	            },
+				{
+					xtype:'textfield',
+					width : 150,
+
+					allowBlank : false,
+					id : 'batch_end_time_string',
+					name : 'batch_end_time_string',
+					fieldLabel:'失效日期',
+					cls:'Wdate',
+					value: '2050-01-01 00:00:00'
+				},
+
+				<%}%>
+				{
+                    fieldLabel: '数据冲突处理方式',
+                    xtype:'radiogroup',                   
+                    columns: [60, 60],
+                    items: [{
+                        boxLabel: '覆盖',
+                        name: 'conflict',
+                        inputValue: '1',                
+                        }, {
+                        boxLabel: '跳过',
+                        name: 'conflict',
+                        checked:true,
+                        inputValue: '0',                
+                    }]
+                }
+			],
+			buttons:[
+				{
+					text : '提交',
+					id : 'btn_bat_sub',
+					handler : submitBatForm
+				},
+				{
+					text : '关闭',
+					handler : function(){
+						batchWin.hide();
+					}
+				}
+			]
+		});		
+        //批量删除
+        var inputDelBatchForm = new Ext.FormPanel({
+			id:"inputDelBatch",
+            name:"inputDelBatch",
+            labelSeparator : ":",
+            frame:true,
+            border:false,
+            autoHeight: true,
+            labelWidth : 230, 
+            items : [
+                <%
+                if(!thisTable.getBatchColumn().isEmpty()){
+                    BlackColumn thisColumn = bcMap.get(thisTable.getBatchColumn());
+                %>
+                {
+                    xtype:'textarea',
+                    cls:'tabclass',
+                    width : 460,
+                    height: 150,
+                    allowBlank : false,
+                    blankText : '内容不能为空',
+                    name : 'batch_<%=thisTable.getBatchColumn()%>',
+                    id : 'batch_del_<%=thisTable.getBatchColumn()%>',
+                    fieldLabel:'<%=thisColumn.getCnName()%>'        
+                }             
+                <%}else{%>                
+                {
+                    xtype:'textarea',
+                    cls:'tabclass',
+                    width : 460,
+                    height: 400,
+                    allowBlank : false,
+                    blankText : '内容不能为空',
+                    name : 'batchContent',
+                    id : 'batchDelContent',
+                    fieldLabel:'<%=fieldLabel%><font color=red>(中间以tab分隔,每个数据占1行，以回车分隔)</font>',
+                    enableKeyEvents : true,
+                    listeners:{
+                        //keypress:{fn:function(txtcomp, eventobj ){Ext.getCmp('btn_submmit').disable();}},
+                        change:{fn:function(txtcomp, eventobj ){
+                            //var anchor_var = Ext.getCmp('anchor').getValue();
+                            //if( anchor_var!=''){
+                                //后台请求二：到库中去取已有数据
+                                //if( keyword_var!='')
+                                //{
+                                    //loadFormKeywordUrl(keyword_var,url_var);
+                                //}
+                                //后台请求一：给出此url是否已被干预过其他词的提示
+                                //showOtherKeywordTip(url_var);
+                            //}
+                        }}//change ends
+                    }
+                }
+                <%}%>
+            ],
+            buttons:[
+                {
+                    text : '提交',
+                    id : 'btn_bat_del',
+                    handler : submitDelBatForm
+                },
+                {
+                    text : '关闭',
+                    handler : function(){
+                        batchDelWin.hide();
+                    }
+                }
+            ]
+        });		
+		
+        var inputExtendDataForm = new Ext.FormPanel({
+			id:"inputExtendData",
+            name:"inputExtendData",
+            labelSeparator : ":",
+            frame:true,
+            border:false,
+            autoHeight: true,
+            labelWidth : 230, 
+            items : [{
+                fieldLabel: '续约期限',
+                xtype:'radiogroup',                   
+                columns: [100, 100],
+                items: [{
+                    boxLabel: '3个月',
+                    name: 'modify_invalidate_time',
+                    id: 'stinvalidate3',
+                    checked:true,
+                    inputValue: '3',                
+                }, 
+                {
+                    boxLabel: '6个月',
+                    name: 'modify_invalidate_time',
+                    id: 'stinvalidate6',
+                    inputValue: '6',
+                }]
+            }],
+            buttons:[
+                {
+                    text : '提交',
+                    id : 'btn_extend_data',
+                    handler : submitExtendDataForm
+                },
+                {
+                    text : '关闭',
+                    handler : function(){
+                        extendWin.hide();
+                    }
+                }
+            ]
+        }); 
+		//删除原有窗口对象
+		win = Ext.getCmp('input_window');
+		if(win){
+			win.destroy();
+		}
+		var win = new Ext.Window({
+			id: 'input_window',
+			layout:'fit',
+		    width:750,
+		    closeAction:'hide',
+			resizable : false,
+			shadow : true,
+			modal :true,
+		    closable:true,
+		    bodyStyle:'padding:5 5 5 5',
+		    animCollapse:true,
+			items:[inputForm],
+			y: 100
+		});
+		
+		batchWin = Ext.getCmp('batch_input_window');
+		if(batchWin){
+			batchWin.destroy();
+		}		
+		var batchWin = new Ext.Window({
+			id: 'batch_input_window',
+			layout:'fit',
+		    width:750,
+		    closeAction:'hide',
+			resizable : false,
+			shadow : true,
+			modal :true,
+		    closable:true,
+		    bodyStyle:'padding:5 5 5 5',
+		    animCollapse:true,
+			items:[inputBatchForm],
+			y: 100
+		});
+		batchDelWin = Ext.getCmp('batch_del_window');
+        if(batchDelWin){
+            batchDelWin.destroy();
+        }
+		var batchDelWin = new Ext.Window({
+            id: 'batch_del_window',
+            layout:'fit',
+            width:750,
+            closeAction:'hide',
+            resizable : false,
+            shadow : true,
+            modal :true,
+            closable:true,
+            bodyStyle:'padding:5 5 5 5',
+            animCollapse:true,
+            items:[inputDelBatchForm],
+            y: 100
+        });
+		
+		extendWin = Ext.getCmp("extend_data_window");
+		if(extendWin)extendWin.destroy();
+		var extendWin = new Ext.Window({
+		    id: 'extend_data_window',
+            layout:'fit',
+            width:750,
+            closeAction:'hide',
+            resizable : false,
+            shadow : true,
+            modal :true,
+            closable:true,
+            bodyStyle:'padding:5 5 5 5',
+            animCollapse:true,
+            items:[inputExtendDataForm],
+            y: 100
+		});
+		//显示新建网页前台限制词记录窗口
+		function showAdd(){
+		
+           <%if(thisTable.getType().equals("apply")){%> 
+			   inputForm.items.each(function(item,index,length){
+			   		if(item.privilege != "check")
+			   			item.setDisabled(false);
+			   		else
+			   			item.setDisabled(true);
+	  		   });	
+  		   <%}%>
+  		   	
+			inputForm.form.reset();
+			inputForm.isAdd = true;
+			win.setTitle("新增数据");
+			win.show();
+			bindingPicker();
+			bindingKeyDown();
+		}
+		//显示新建网页前台限制词记录窗口
+		function showBatchAdd(){
+			inputBatchForm.form.reset();
+			inputBatchForm.isAdd = true;
+			batchWin.setTitle("批量新增数据");
+			batchWin.add(inputBatchForm);
+			batchWin.show();
+			bindingPicker();
+			bindingKeyDown();
+			//url提示信息标签
+		}		
+		
+		String.prototype.replaceAll  = function(s1,s2){    
+			return this.replace(new RegExp(s1,"gm"),s2);    
+		}
+		function reload(){
+            store.load({params:{start:0, limit:pageSize}});
+        }
+        function doSync(){
+            new_synchronize(reload);
+        }
+        function doCancel(){
+            cancel_synchronize(reload);
+        }
+        
+		//加载表单数据
+		function loadForm(recordId){
+			inputForm.form.load({
+				waitMsg : '正在加载数据请稍后',//提示信息
+				waitTitle : '提示',//标题
+				url : 'ubs.do?method=getBlackById&table=<%=table%>',//请求的url地址
+				params : {recordId : recordId},
+				method:'GET',//请求方式
+				success:function(form,action){//加载成功的处理函数
+				    //console.log("success");
+				},
+				failure:function(form,action){//加载失败的处理函数
+					Ext.Msg.alert('提示','数据加载失败');
+				}
+			});
+		}		
+		
+		//显示修改网页前台限制词记录窗口
+		function showModify(){
+           
+           <%if(thisTable.getType().equals("apply")){%> 
+			   inputForm.items.each(function(item,index,length){
+			   					//item.disabled = true;
+			   			<%
+			   			/*
+			   			if((Integer)session.getAttribute(table+"_check")!=1)
+			   					out.println("item.setDisabled(true);");
+			   			else
+			   					out.println("item.setDisabled(false);");
+			   			*/
+			   			%>
+			   });	
+  		   <%}%>	
+		
+			var recs = getCheckedIdList();
+			var num = recs.length;
+			if(num > 1){
+				Ext.MessageBox.alert("提示","每次只能修改一条记录信息。")
+			}else if(num == 1){
+				inputForm.form.reset();
+				inputForm.isAdd = false;
+				win.setTitle("修改记录信息");
+				win.show();
+				bindingPicker();
+				bindingKeyDown();
+				
+				var recordId = recs[0]["id"];				
+				loadForm(recordId);
+				
+				//alert(recs[0].get("in_charge"));
+				if(recs[0].get("in_charge") && recs[0].get("in_charge").indexOf(user)!=-1){
+					var now = new Date();
+					var nextDate = new Date(now.getTime() + 2*24*60*60*1000);  //前两天
+					//提前两天，过时不侯
+					if(nextDate > recs[0].get("end_time")&&recs[0].get("end_time") >= now)
+						//alert("xx");
+						Ext.getCmp("duration_select").setDisabled(false);
+						Ext.getCmp("id").setDisabled(false);
+				}				
+				
+			}
+
+		}
+		
+		function extend(){
+		    var recs = getCheckedIdList();
+            var num = recs.length;
+            if(num < 1){
+                Ext.MessageBox.alert("提示","请选择需要续约的数据。");
+            }else{	                
+                inputExtendDataForm.form.reset();
+                inputForm.isAdd = false;
+                extendWin.setTitle("过期续约");
+                extendWin.show();   
+            }
+		}
+		
+		function submitExtendDataForm(){
+		    var ids=getCheckedIdList(),num=ids.length;
+		    var idt= [];
+		    for(var i=0;i<num;i++){
+		        idt.push(ids[i]['id']);
+		    }
+		    var m=Ext.getCmp("stinvalidate3").getValue()?"3":"6";
+		    
+	          Ext.Ajax.request({
+	                url : 'ubs.do?method=extendBlacklist&table=<%=table%>',
+	                params : {ids : idt.join(";"),m:m},
+	                method : 'GET',
+	                success : function(response,options){
+	                    var result = Ext.util.JSON.decode(response.responseText);
+	                    if(result.success){
+	                        //服务器端数据成功删除后，同步删除客户端列表中的数据
+	                        store.load({params:{start:0, limit:pageSize}});
+	                        extendWin.hide();
+	                        Ext.Msg.alert('提示','续约记录成功。');
+	                    }else{
+	                        Ext.Msg.alert('提示','续约记录失败！');
+	                    }
+	                },
+	                failure : function(response,options){
+	                    Ext.Msg.alert('提示','续约记录失败！');
+	                }
+	            });
+		}
+		function bindingPicker(){
+			//给上下线时间预置当前时间和翌日当前时间
+			Ext.each(Ext.query(".Wdate"),function(item){
+			    item.onclick=function(){
+			        WdatePicker({skin:'ext',dateFmt:'yyyy-MM-dd HH:mm:ss'  });
+			    }
+			});			
+			<%=timePickerSb.toString()%>
+		}
+
+        //显示删除前缀表记录对话框
+        function showBatchDelete(){
+            inputDelBatchForm.form.reset();
+            inputDelBatchForm.isAdd = false;
+            batchDelWin.setTitle("批量删除数据");
+            batchDelWin.add(inputDelBatchForm);
+            batchDelWin.show();
+            bindingKeyDown();
+        }
+		//显示删除网页前台限制词记录对话框
+		function showDelete(){
+			var recs = getCheckedIdList();
+			
+			var list = [];
+			if(recs.length == 0){
+				Ext.MessageBox.alert('提示','请选择要进行操作的记录！');
+			}else{
+				for(var i = 0 ; i < recs.length ; i++){
+					var rec = recs[i];
+					list.push(rec.get('id'));
+				}
+			}			
+			
+			Ext.MessageBox.confirm("提示","您确定要删除所选记录吗？",function(btnId){
+				if(btnId == 'yes')
+					deleteRecord(list);
+			});
+			
+		}
+		//删除网页前台限制词记录
+		function deleteRecord(recordIdList){
+			var msgTip = Ext.MessageBox.show({
+				title:'提示',
+				width : 250,
+				msg:'正在删除此记录信息请稍后......'
+			});
+			Ext.Ajax.request({
+				url : 'ubs.do?method=deleteBlacklist&table=<%=table%>',
+				params : {recordIdList : recordIdList.toString()},
+				method : 'GET',
+				success : function(response,options){
+					msgTip.hide();
+					var result = Ext.util.JSON.decode(response.responseText);
+					if(result.success){
+						//服务器端数据成功删除后，同步删除客户端列表中的数据
+						store.load({params:{start:0, limit:pageSize}});
+						<%
+							if(!thisTable.getSumColumn().isEmpty())
+	    					out.println("reloadSum();");
+						%>	
+						Ext.Msg.alert('提示','删除记录成功。');
+					}else{
+						Ext.Msg.alert('提示','删除记录失败！');
+					}
+				},
+				failure : function(response,options){
+					msgTip.hide();
+					Ext.Msg.alert('提示','删除记录失败！');
+				}
+			});
+		}
+
+		
+		//提交表单数据
+		function submitForm(){
+			//判断当前执行的提交操作，isAdd为true表示执行网页前台限制词记录新增操作，false表示执行网页前台限制词记录修改操作
+			if( inputForm.form.isValid() ){
+					if(inputForm.isAdd){
+						//新增网页前台限制词记录信息
+						inputForm.form.submit({
+							clientValidation:true,//进行客户端验证
+							waitMsg : '正在提交数据请稍后',//提示信息
+							waitTitle : '提示',//标题
+							url : 'ubs.do?method=addBlacklist&table=<%=table%>',//请求的url地址
+							method:'POST',//请求方式
+							success:function(form,action){//加载成功的处理函数
+								win.hide();
+								store.load({params:{start:0, limit:pageSize}});
+								<%
+									if(!thisTable.getSumColumn().isEmpty())
+				    					out.println("reloadSum();");
+								%>								
+								Ext.Msg.alert('提示','新增数据记录成功');
+							},
+							failure:function(form,action){//新增失败的处理函数
+								var failcause = action.result.cause;
+								Ext.MessageBox.show({
+						           title: '提示',
+						           msg: '新增数据记录失败。原因是:<br>'+failcause,
+						           buttons: Ext.MessageBox.OK,
+						           icon: Ext.MessageBox.ERROR
+						        });
+							}
+						});
+					}//if
+					else{
+						//修改网页前台限制词记录信息
+						inputForm.form.submit({
+							clientValidation:true,//进行客户端验证
+							waitMsg : '正在提交数据请稍后',//提示信息
+							waitTitle : '提示',//标题
+							url : 'ubs.do?method=modifyBlacklist&table=<%=table%>',//请求的url地址
+							method:'POST',//请求方式
+							success:function(form,action){//加载成功的处理函数
+								win.hide();
+								//store.load({params:{start:0, limit:pageSize}});
+								store.reload();
+								<%
+									if(!thisTable.getSumColumn().isEmpty())
+				    					out.println("reloadSum();");
+								%>								
+								
+								Ext.Msg.alert('提示','修改数据记录成功');
+							},
+							failure:function(form,action){//加载失败的处理函数
+								var failcause = action.result.cause;
+								Ext.MessageBox.show({
+						           title: '提示',
+						           msg: '修改数据记录失败。原因是:<br>'+failcause,
+						           buttons: Ext.MessageBox.OK,
+						           icon: Ext.MessageBox.ERROR
+						        });
+							}
+						});
+					}//else
+					
+
+				}
+		}
+		
+		function submitBatForm(){
+			if( inputBatchForm.form.isValid() ){
+				//新增网页前台限制词记录信息
+                inputBatchForm.form.submit({
+                    clientValidation:true,//进行客户端验证
+                    waitMsg : '正在提交数据请稍后',//提示信息
+                    waitTitle : '提示',//标题
+                    url : 'ubs.do?method=addBatchBlacklist&table=<%=table%>',//请求的url地址
+                    method:'POST',//请求方式
+                    success:function(form,action){//加载成功的处理函数
+                        var message = action.result.cause;
+                        Ext.MessageBox.alert('提示',message,function(btn){
+                            var status = action.result.status;
+                            if(status==0){
+                                batchWin.hide();
+                                store.load({params:{start:0, limit:pageSize}});
+                            }
+                        });
+                    }, 
+                    failure:function(form,action){//新增失败的处理函数
+                        var message = action.result.cause;
+                        if(message=='undefined'){
+                            message = "新增数据记录失败,可能是超时,请减少数据量再进行重试";
+                        }
+                        Ext.MessageBox.show({
+                           title: '提示',
+                           msg: message,
+                           buttons: Ext.MessageBox.OK,
+                           icon: Ext.MessageBox.ERROR
+                        });
+                    }
+                });			    
+	
+			<%
+				if(!thisTable.getSumColumn().isEmpty())
+	    					out.println("reloadSum();");
+			%>			
+			}		
+		}
+	      function submitDelBatForm(){
+	            if( inputDelBatchForm.form.isValid() ){         
+                    //批量删除黑名单
+                    inputDelBatchForm.form.submit({
+                        clientValidation:true,//进行客户端验证
+                        waitMsg : '正在删除数据请稍后',//提示信息
+                        waitTitle : '提示',//标题
+                        url : 'ubs.do?method=deleteBatchBlacklist&table=<%=table%>',//请求的url地址
+                        method:'POST',//请求方式
+                        success:function(form,action){//加载成功的处理函数
+                            var message = action.result.cause;
+                            Ext.MessageBox.alert('提示',message,function(btn){
+                                var status = action.result.status;
+                                if(status==0){
+                                    batchDelWin.hide();
+                                    store.load({params:{start:0, limit:pageSize}});
+                                }
+                            });
+                        },
+                        failure:function(form,action){//新增失败的处理函数 
+                            var failcause = action.result.cause;
+                            Ext.MessageBox.show({
+                                   title: '提示',
+                                   msg: '新增数据记录失败。原因是:<br>'+failcause,
+                                   buttons: Ext.MessageBox.OK,
+                                   icon: Ext.MessageBox.ERROR
+                                });
+                        }
+                    }); 
+                    
+                    <%
+                    if(!thisTable.getSumColumn().isEmpty())
+                                out.println("reloadSum();");
+                %>
+	            }
+	        }
+		//取得所选域名记录信息
+		function getCheckedIdList(){
+			var recs = recordGrid.getSelectionModel().getSelections();
+			if(recs.length == 0){
+				Ext.MessageBox.alert('提示','请选择要进行操作的记录！');
+				return;
+			}
+			
+			return recs;
+		}
+		
+		function showClear(){
+			Ext.MessageBox.confirm("提示","您确定要清除过期的记录吗？",function(btnId){
+				if(btnId == 'yes'){
+
+					var msgTip = Ext.MessageBox.show({
+						title:'提示',
+						width : 250,
+						msg:'正在清除记录信息请稍后......'
+					});
+					Ext.Ajax.request({
+						url : 'ubs.do?method=deleteInvalid&table=<%=table%>',
+						//params : {recordIdList : recordIdList.toString()},
+						method : 'GET',
+						success : function(response,options){
+							msgTip.hide();
+							var result = Ext.util.JSON.decode(response.responseText);
+							if(result.success){
+								//服务器端数据成功删除后，同步删除客户端列表中的数据
+								store.load({params:{start:0, limit:pageSize}});
+								Ext.Msg.alert('提示','清理记录成功。');
+							}else{
+								Ext.Msg.alert('提示','清理记录失败！');
+							}
+						},
+						failure : function(response,options){
+							msgTip.hide();
+							Ext.Msg.alert('提示','清理记录失败！');
+						}
+					});
+
+				}
+			});
+		}
+        
+		//线上同步词表
+		function synchronize(){
+			
+			var msgTip = Ext.MessageBox.show({
+				title:'提示',
+				width : 250,
+				msg:'正在向线上发送同步信号，请稍候......'
+			});
+			Ext.Ajax.request({
+				url : 'ubs.do?method=syncBlacklist&table=<%=table%>',
+				params : {deploytype : 'front'},
+				method : 'POST',
+				timeout :300000,
+				success : function(response,options){
+					msgTip.hide();
+					var result = Ext.util.JSON.decode(response.responseText);	
+					if(result.success){
+						//服务器端数据成功删除后，同步删除客户端列表中的数据
+						//store.load({params:{start:0, limit:18}});
+						Ext.Msg.alert('提示','词表上线成功！');
+					}else{
+						Ext.Msg.alert('提示','词表上线失败！'+ result.cause);
+					}										
+				},
+				failure : function(response,options){
+					msgTip.hide();
+					Ext.Msg.alert('提示','词表线上同步失败！');
+				}
+			});
+		}
+
+		
+		<%
+		//接口说明
+		String interfaceInfo = fieldLabel;
+		if(!thisTable.isSelfConfig()){
+			interfaceInfo+= "create_time(创建时间)<br>modify_time(修改时间)<br>start_time(生效时间)<br>end_time(失效时间)<br>user(用户)<br>";
+			if(thisTable.isShowQuickSync()){
+			    interfaceInfo+= "sync_status(同步状态)<br>sync_message(同步信息)<br>sync_modify_time(同步修改时间)<br>";
+			}
+		}
+		String domain = "umis.op.sogou-inc.com";
+		if(UmisAction.umisDomain!=null){
+		    domain = UmisAction.umisDomain;
+		}
+		%>
+		function showInterface(){
+			var info = "<table>"+
+							"<tr ><td width=70><b>接口地址(gfs)：</b></td><td>http://<%=domain%>/ubs?act=gen&table=<%=table%></td></tr>"+
+							"<tr ><td width=70><b>接口地址(file)：</b></td><td>http://<%=domain%>/ubs?act=output&table=<%=table%></td></tr>"+
+							"<tr ><td><b>参数说明：</b></td><td></td></tr>"+
+							"<tr ><td>act:</td><td>gen 生成文件，置于gfs上<br>文件位置:<%=thisTable.getGfsPath()%><br/>output 以文本方式显示，可通过wget获取</td></tr>"+
+							"<tr ><td>table:</td><td>数据库表名</td></tr>"+
+							"<tr ><td>spliter:</td><td>默认\t分隔数据字段，可以指定其他字符，值为xml时 表示以XML格式生成数据</td></tr>"+
+							"<tr ><td>type:</td><td>如果生成数据指定为XML时,0 字段以item方式构建，1 字段以 attribute方式 构建</td></tr>"+
+							"<tr ><td><b>数据库字段</b></td><td></td></tr>"+
+							"<tr ><td></td><td><%=interfaceInfo%></td></tr>"+
+					   "</table>";
+		
+			/*
+			var info = "接口地址： <br>";
+			info += "参数说明：<br/>";
+			info += "&nbsp;&nbsp;act:gen 生成文件，置于gfs上，文件位置  <%=thisTable.getGfsPath()%>,output 以文本方式显示，可通过wget获取 <br/>";
+			info += "&nbsp;table:数据库表名<br/>";
+			info += "&nbsp;spliter: 默认\t分隔数据字段，可以指定其他字符，值为xml时 表示以XML格式生成数据<br/>";
+			info += "&nbsp;type:如果生成数据指定为XML时,0 字段以item方式构建，1 字段以 attribute方式 构建<br/>";
+				*/
+		
+			Ext.MessageBox.show({
+                  title: '接口说明',
+                  msg: info ,
+                  width:10000,
+                  buttons: Ext.MessageBox.YESNO
+                  //,icon: Ext.MessageBox.QUESTION
+            });		
+		}
+
+		function date2Str(d){
+		    var yy = d.getFullYear(); 
+		    var month = d.getMonth()+1;
+		    var dd = d.getDate();
+
+		    clock = yy + '-';
+		    if (month < 10) clock += '0'; 
+		    clock += month+'-'; 
+		    if (dd < 10) clock += '0'; 
+		    clock += dd+' '; 
+		    
+		    var hh = d.getHours(); 
+		    var mm = d.getMinutes(); 
+		    var ss = d.getTime() % 60000; 
+		    ss = (ss - (ss % 1000)) / 1000; 
+
+		    if (hh < 10) clock += '0'; 
+		    clock += hh+':'; 
+		    if (mm < 10) clock += '0'; 
+		    clock += mm+':'; 
+		    if (ss < 10) clock += '0'; 
+		    clock += ss; 
+		    return(clock); 
+		}
+
+		function getTimeAfterNow(after_mnt){ //当前日期后after_mnt分钟
+			var clock = '';
+		    var now = new Date();
+		    now.setMinutes(now.getMinutes()+after_mnt);
+		    
+		    var yy = now.getFullYear(); 
+		    var month = now.getMonth()+1;
+		    var dd = now.getDate();
+
+		    clock = yy + '-';
+		    if (month < 10) clock += '0'; 
+		    clock += month+'-'; 
+		    if (dd < 10) clock += '0'; 
+		    clock += dd+' '; 
+		    
+		    var hh = now.getHours(); 
+		    var mm = now.getMinutes(); 
+		    var ss = now.getTime() % 60000; 
+		    ss = (ss - (ss % 1000)) / 1000; 
+
+		    if (hh < 10) clock += '0'; 
+		    clock += hh+':'; 
+		    if (mm < 10) clock += '0'; 
+		    clock += mm+':'; 
+		    if (ss < 10) clock += '0'; 
+		    clock += ss; 
+		    return(clock); 
+		}
+		
+		var escapespecial={"¤":"%A1%E8","§":"%A1%EC","¨":"%A1%A7","°":"%A1%E3","±":"%A1%C0","·":"%A1%A4","×":"%A1%C1","à":"%A8%A4","á":"%A8%A2","è":"%A8%A8","é":"%A8%A6","ê":"%A8%BA","ì":"%A8%AC","í":"%A8%AA","ò":"%A8%B0","ó":"%A8%AE","÷":"%A1%C2","ù":"%A8%B4","ú":"%A8%B2","ü":"%A8%B9","+":"%2B"};
+		function rescape(s) {
+	        var r = ""
+	        if (typeof(s) == "undefined")
+	                return r
+	        for (var i=0;i<s.length; i++) {
+	                var c = s.charAt(i);
+	                if( typeof(escapespecial[c]) != "undefined")
+	                        r=r+escapespecial[c];
+	                else
+	                        r=r+escape(c);
+	        }
+	        return r;
+		}
+			
+		//开始查询代码
+		function query(tag,flag){
+			
+			var url = "ubs.do?method=getBlacklist&table=<%=table%>"; 
+			<%
+				
+				for(BlackSearch bs : searchList){
+					String seName = bs.getColumnName();
+					BlackColumn bc = bcMap.get(seName);	
+					
+					//url += "+\"&"+bs.getColumnName()+"=\"+encodeURIComponent(sValue)";
+					if(bc.getTypeName().equals("radio")){
+						
+					%>
+						var rValue="";
+						for(var i=1;i<=<%=bc.getItems().size()%>;i++){
+							 if(Ext.getCmp("query_<%=seName%>"+i).checked){
+								rValue =  document.getElementById("query_<%=seName%>"+i).value;
+							 	break;
+							 }	
+						}
+						if(rValue!="")
+							url += "&<%=bs.getColumnName()%>="+rValue;
+					<%
+
+					}else if(bc.getTypeName().equals("datetime")){
+					 %>
+					 url += "&<%=bs.getColumnName()%>_start=" + encodeURIComponent(Ext.getCmp("query_<%=seName%>_start").getValue());
+					 url += "&<%=bs.getColumnName()%>_end=" + encodeURIComponent(Ext.getCmp("query_<%=seName%>_end").getValue());
+					 <%
+					}else{
+					%>
+					url += "&<%=bs.getColumnName()%>=" + encodeURIComponent(Ext.getCmp("query_<%=seName%>").getValue());
+					<%
+					}
+				}
+			%>
+		
+			var query_start_time_1 = document.getElementById("query_start_time_1").value;
+			var query_start_time_2 = document.getElementById("query_start_time_2").value;
+			var query_end_time_1 = document.getElementById("query_end_time_1").value;
+			var query_end_time_2 = document.getElementById("query_end_time_2").value;		
+		
+			url += "&start_time_1=" + query_start_time_1 + "&start_time_2=" + query_start_time_2
+			+"&end_time_1=" + query_end_time_1 + "&end_time_2=" + query_end_time_2;
+
+            if(flag)
+                url += "&precise=1";
+			
+			if(!tag)
+				url = "ubs.do?method=getBlacklist&table=<%=table%>";
+			store.proxy.conn.url = url;
+			store.load({params:{start:0, limit:pageSize}});
+		}
+		
+		dr.render('dr');
+		
+//		Ext.get('query_start_time_1').on('click',function(){
+//			WdatePicker({skin:'ext',dateFmt:'yyyy-MM-dd HH:mm:ss',maxDate:'#F{$dp.$D(\'query_start_time_2\')}'});
+//		});
+//		Ext.get('query_start_time_2').on('click',function(){
+//			WdatePicker({skin:'ext',dateFmt:'yyyy-MM-dd HH:mm:ss',minDate:'#F{$dp.$D(\'query_start_time_1\')}'});
+//		});
+//		Ext.get('query_end_time_1').on('click',function(){
+//			WdatePicker({skin:'ext',dateFmt:'yyyy-MM-dd HH:mm:ss',maxDate:'#F{$dp.$D(\'query_end_time_2\')}'});
+//		});
+//		Ext.get('query_end_time_2').on('click',function(){
+//			WdatePicker({skin:'ext',dateFmt:'yyyy-MM-dd HH:mm:ss',minDate:'#F{$dp.$D(\'query_end_time_1\')}'});
+//		});	
+		Ext.each(Ext.query(".Wdate"),function(that){
+		    that.onclick=function(){WdatePicker({skin:'ext',dateFmt:'yyyy-MM-dd HH:mm:ss'});}
+		});
+		
+		
+		function reloadSum(){
+				var count = 0;
+				Ext.Ajax.request({
+				url : 'ubs.do?method=sumApi&table=<%=table%>',
+				//params : {deploytype : 'front'},
+				method : 'POST',
+				timeout :300000,
+				success : function(response,options){
+						var result = Ext.util.JSON.decode(response.responseText);			
+						count = result.count;
+						document.getElementById("detailInfo").innerHTML = "<font color=red>配额总数："+count+"</font>";
+	
+					},
+					failure : function(response,options){
+						document.getElementById("detailInfo").innerHTML = "";
+					}
+				});
+				
+		}
+		/*
+		 * 支持\t可用
+		 */
+      function stopEvent(evt){
+          evt = evt||window.event;  
+          if(evt.stopPropagation)
+              evt.stopPropagation();
+          if(evt.preventDefault)
+              evt.preventDefault();
+          evt.cancelBubble = true;
+          evt.cancel = true;
+          evt.returnValue = false;
+          return false;
+      }
+      function getKeycode(evt){
+          evt=evt||window.event;
+          var keycode=evt.which||evt.keyCode;
+          return keycode;
+      }
+      function insertAtCursor(myField, myValue)
+      {  
+          if (document.selection)
+          {  
+              myField.focus();
+              sel = document.selection.createRange();  
+              sel.text = myValue;  
+          }
+          else if (myField.selectionStart || myField.selectionStart == "0")
+          {  
+              var startPos = myField.selectionStart;
+              var endPos = myField.selectionEnd;
+              myField.value = myField.value.substring(0, startPos) + myValue + myField.value.substring(endPos, myField.value.length);
+              myField.selectionEnd = startPos+'\t'.length;
+          }
+          else
+          {  
+              myField.value += myValue;  
+          }
+      }
+      function bindingKeyDown(){      
+          Ext.each(Ext.query(".tabclass"),function(item){
+              item.onkeydown=function(evt){
+                  var keycode = getKeycode(evt);
+                  if(keycode==9){
+                      stopEvent(evt);
+                      insertAtCursor(item,'\t');
+                  }
+              }
+          });
+      }
+      function getInvalidateTime(month){
+          var startTime = Ext.getCmp("start_time_string").getValue();
+          if(startTime=="")return null;
+          
+          var date = new Date();
+          try{
+              date.setYear(parseInt(startTime.substr(0,4),10));
+              date.setMonth   (parseInt(startTime.substr(5, 2), 10) - 1);
+              date.setDate    (parseInt(startTime.substr(8, 2), 10));
+              date.setHours   (parseInt(startTime.substr(11, 2), 10));
+              date.setMinutes (parseInt(startTime.substr(14, 2), 10));
+          }catch(e){return null;}
+          var invalidateTime = new Date(date.getTime()+month*30*24*60*60*1000);
+          var year = invalidateTime.getFullYear(),month=invalidateTime.getMonth()+1,day=invalidateTime.getDate(),
+          hour=invalidateTime.getHours(),minute=invalidateTime.getMinutes(),second=invalidateTime.getSeconds();
+          return year+"-"+(month<10?("0"+month):month)+"-"+(day<10?("0"+day):day)+" "+(hour<10?("0"+hour):hour)+":"+(minute<10?("0"+minute):minute)+":"+(second<10?("0"+second):second);
+      }
+      function setInvalidateTime(m){
+          if(m==0){
+              Ext.getCmp("end_time_string").setValue("2050-01-01 00:00:00");
+          }else{
+              var inTime = getInvalidateTime(m);
+              if(inTime==null)alert("生成失效时间失败，请手动填写");
+              Ext.getCmp("end_time_string").setValue(inTime);
+          }
+      }
+	});
+
+</script>
+<body>
+
+<div id="dr" style="width:100%;height:auto;"></div>
+<div id="detailInfo"></div>
+<div id="progress-div" style="width:100%;height:4%;display:none"></div>
+<div id='grid-div' style="width:100%; height:76%;"></div>
+
+</body>
+</html>

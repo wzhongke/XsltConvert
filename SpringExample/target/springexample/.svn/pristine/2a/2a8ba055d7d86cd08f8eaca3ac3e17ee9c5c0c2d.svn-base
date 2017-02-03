@@ -1,0 +1,851 @@
+<%@ page language="java" contentType="text/html; charset=GBK"
+    pageEncoding="GBK"%>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=GBK">
+	<title>固排记录列表</title>
+	<script src="/js/jquery.js"></script>
+	<script type="text/javascript">
+	tablename = "tb_snap_summary";
+	syncHubType = "other";
+	pageSize = 18;
+	</script>
+	<script type="text/javascript" src="/js/quickSync.js"></script>
+	<script type="text/javascript" src="/js/tabinsert.js"></script>
+	
+</head>
+<script type="text/javascript">
+	Ext.namespace('Ext.exampledata');
+	Ext.onReady(function(){
+		var exportConditionUrl = 'webSnap.do?method=getRecordList';
+		Ext.exampledata.updatetype_list = [
+		   ['0','更新快照',"sss"],
+		   ['1','更新summary',"ttt"]
+		];
+		Ext.exampledata.syncstatus_list = [
+		                                   ['0','all',"sss"],
+		                                   ['1', '等待同步',"ss"],   
+		                                   ['2', '正在同步',"ss"],  
+		                                   ['3', '同步成功',"ss"],
+		                                   ['4', '同步失败',"ss"]
+		                                ];
+		
+		//创建新增或单独修改表记录信息的form表单
+		Ext.QuickTips.init();
+		Ext.form.Field.prototype.msgTarget = 'side';//统一指定错误信息提示方式
+		//定义数据集对象
+		var store = new Ext.data.Store({//配置分组数据集
+			reader: new Ext.data.XmlReader({
+				totalRecords: "results",
+				record: "WebSnapRecord",
+				id: "id"
+			},
+			Ext.data.Record.create([
+				{name: 'id'},
+				{name: 'updatetype'},
+				{name: 'url'},
+				{name: 'tpxml'},
+				{name: 'synch_status'},
+				{name: 'start_time', type: 'date', dateFormat: 'Y-m-d H:i:s'},
+				{name: 'end_time', type: 'date', dateFormat: 'Y-m-d H:i:s'},				
+				{name: 'submitter'},
+				{name: 'create_time', type: 'date', dateFormat: 'Y-m-d H:i:s'},
+				{name: 'modify_time', type: 'date', dateFormat: 'Y-m-d H:i:s'},
+				{name: 'sync_status'},
+                {name: 'sync_message'},
+                {name: 'sync_modify_time',type:'date',dateFormat:'Y-m-d H:i:s'}
+			])
+			),
+			proxy : new Ext.data.HttpProxy({
+				url : 'webSnap.do?method=getRecordList'
+			}),
+			sortInfo: {field: 'id', direction: 'DESC'},
+	  		remoteSort: true
+		})
+		store.load({params:{start:0, limit:18}});
+
+
+		<%//根据权限信息显示工具栏
+		StringBuffer toolbar_str = new StringBuffer();
+    	toolbar_str.append("{text : '新增',iconCls:'add',handler : showAdd},");
+    	toolbar_str.append("{text : '修改',iconCls:'option',handler : showModify},");
+    	toolbar_str.append("{text : '删除',iconCls:'remove',handler : showDelete},");
+    	toolbar_str.append("'-',");
+    	toolbar_str.append("{text : '上线',iconCls:'option',handler : synchronize},");
+    	toolbar_str.append("'-',");
+    	toolbar_str.append("{text : '快速同步new',iconCls:'batch-remove',handler : doSync},");
+        toolbar_str.append("{text : '取消同步',iconCls:'batch-remove',handler : doCancel},");
+	    
+	    toolbar_str.deleteCharAt(toolbar_str.length()-1);
+	    %>
+		//创建工具栏组件
+		var toolbar = new Ext.Toolbar([
+		    <%=toolbar_str.toString()%>
+		]);
+		//将 是否封禁首页和是否留首封站 的代码解析成 文本
+		function booleantag(val){
+	        if(val == 1){
+	            return '等待同步';
+	        }else if(val == 2){
+	            return '正在同步';
+	        }else if(val==3){
+	            return '同步成功';
+	        }else if(val==4){
+	            return '同步失败';
+	        }else
+		        return '';
+    	}
+		function reload(){
+            store.load({params:{start:0, limit:pageSize}});
+        }
+        function doSync(){
+            new_synchronize(reload);
+        }
+        function doCancel(){
+            cancel_synchronize(reload);
+        }
+        
+    	function keyword_renderer(val,cellmeta, record){
+    		if(record.data["synch_status"]==1)
+    			return "<a href=\"#\" onclick=\"window.open('http://10.10.120.38/web?query="+val+"&page=1&forceQuery=on');window.open('http://10.11.89.18/web?query="+val+"&page=1&forceQuery=on');\">"+ val +"</a>";
+    		else
+    			return "<a href='#' onclick='Ext.MessageBox.alert(\"提示\",\"数据未同步，请稍后刷新页面后重试！\")'>"+val+"</a>";
+    	}
+    	
+    	function url_renderer(val){
+  			return "<a href='"+val+"' target='_blank'>"+val+"</a>";
+    	}
+    	function update_renderer(val){
+    	    if(val==1){
+    	        return "更新summary";
+    	    }else{
+    	        return "更新快照";
+    	    }
+    	}
+		function lifecycletag(val){
+	        if(val == 0){
+	            return '<font color="gray">未生效</font>';
+	        }else if(val == 1){
+	            return '<font color="green">生效中</font>';
+	        }else if(val == 2){
+		        return '<font color="red">已失效</font>';
+	        }else{
+	        	return '';
+		    }
+    	}
+    	//创建分页工具栏
+    	var pagingBar = new Ext.PagingToolbar({
+    		pageSize: 18,
+	        store: store,
+	        displayInfo: true,
+	        displayMsg: '显示 {0} - {1} , 共 {2} 条记录',
+	        emptyMsg: "没有任何记录",
+	        items:['-']
+    	});
+		//创建Grid表格组件
+		var cb = new Ext.grid.CheckboxSelectionModel();
+
+		//开始查询表单部分
+		var dr = new Ext.FormPanel({
+	    	labelWidth: 125,
+	        frame: true,
+	  	  	bodyStyle:'padding:5px 5px 0',
+	  	 	autoScroll: true,
+	  	  	autoWidth :true,
+	  	  	//width: 1240,
+	        defaults: {width: 175},
+	      	//增加表单键盘事件
+	        keys:[
+	         {
+	             key: [10,13],
+	             fn:query
+	         } ],
+	        items: [{
+	        	xtype:'textfield',
+				width : 400,
+				id : 'query_url',
+				name : 'query_url',
+				fieldLabel:'url'
+	        },{
+	            layout:'column',
+	            width : 800,
+	            border:false,
+	            items:[{
+                    columnWidth:.5,
+                    layout: 'form',
+                    border:false,
+                    items: [{
+                        xtype:'radio',
+                        fieldLabel:'查找方式',
+                        checked: true,
+                        boxLabel:'精确查找',
+                        name:'query_matchType',
+                        anchor:'100%',
+                        inputValue: 1
+                    }]
+	                },{   
+	                    columnWidth:.5,
+	                    layout: 'form',
+	                    border:false,
+	                    items: [{
+	                        xtype:'radio',
+	                        boxLabel:'模糊查找',
+	                        hideLabel: true,
+	                        name:'query_matchType',
+	                        anchor:'100%',
+	                        inputValue: 0
+	                    }]
+	               }]
+            },{
+                xtype:'radiogroup',
+                fieldLabel:'同步状态',
+                labelSeparator:':',
+                columns:5,
+                labelStyle: 'width: 100px;',
+                width:500,
+                items:[
+                      {boxLabel:'全部',inputValue:0,checked:true,name:"syncstatus",border:false},
+                       {boxLabel:'等待同步',inputValue:1,name:"syncstatus",labelStyle:'width: 185px;',border:false},
+                       {boxLabel:'正在同步',inputValue:2,name:"syncstatus",labelStyle:'width: 185px;',border:false},
+                       {boxLabel:'同步成功',inputValue:3,name:"syncstatus",labelStyle:'width: 185px;',border:false},
+                       {boxLabel:'同步失败',inputValue:4,name:"syncstatus",labelStyle:'width: 255px;',border:false}
+                      
+                ]    
+            }],
+			buttons:[
+				{
+					text : '查询',
+					handler : function(){
+						query(true);
+					}
+				},
+				{
+					text : '返回',
+					handler : function(){
+						query(false);
+					}
+				}
+			]
+	      });
+		
+		var recordGrid = new Ext.grid.GridPanel({
+			applyTo : 'grid-div',
+			tbar : toolbar,
+			frame:true,
+			loadMask: true,
+			autoScroll: true,
+			autoWidth :true,
+			//width: 1240,
+			store: store,
+			viewConfig : {
+				autoFill : true
+			},
+			sm : cb,
+			columns: [//配置表格列
+		        new Ext.grid.RowNumberer({
+					header : '行号',
+					width : 40
+				}),//表格行号组件
+				cb,
+				{header: "编号", width: 40, dataIndex: 'id', sortable: true},
+				{header: "更新类型", width: 130, dataIndex: 'updatetype',renderer:update_renderer},
+				{header: "URL", width: 130, dataIndex: 'url',renderer:url_renderer},
+				{header: "同步状态", width: 60, renderer: booleantag, dataIndex: 'synch_status'},
+				{header: "上线时间", width: 100, dataIndex: 'start_time', renderer: Ext.util.Format.dateRenderer('Y-m-d H:i:s')},
+				{header: "下线时间", width: 100, dataIndex: 'end_time', renderer: Ext.util.Format.dateRenderer('Y-m-d H:i:s')},
+				{header: "提交者", width: 100, dataIndex: 'submitter'},
+				{header: "创建时间", width: 100, dataIndex: 'create_time', renderer: Ext.util.Format.dateRenderer('Y-m-d H:i:s')},
+				{header: "更新时间", width: 100, dataIndex: 'modify_time', renderer: Ext.util.Format.dateRenderer('Y-m-d H:i:s')},
+				{header: "快速同步状态", width: 75, dataIndex: 'sync_status',sortable: true,renderer:function(value,cellmeta,record){                  
+                    if(value==1){cellmeta.attr="style=background-color:red";return "新增";}
+                    if(value==2){cellmeta.attr="style=background-color:yellow";return "待同步";}
+                    if(value==3){
+                        var sync_modify_time = record.data['sync_modify_time'];
+                        cellmeta.attr="style=background-color:yellow";
+                        return "同步中";}
+                    if(value==4){cellmeta.attr="style=background-color:green";return "同步成功";}
+                    if(value==5){cellmeta.attr="style=background-color:red";return "同步失败";}
+                    
+                    var sync_modify_time = record.data['sync_modify_time'];
+                    //return Ext.util.Format.date(sync_modify_time, 'Y-m-d H:i:s');
+                    cellmeta.attr="style=background-color:red";
+                    return "数据错误";}},
+                {header: "同步信息", width: 75, dataIndex: 'sync_message'},
+                {header: "同步修改时间", width: 75, dataIndex: 'sync_modify_time', renderer: Ext.util.Format.dateRenderer('Y-m-d H:i:s')}
+                
+			],
+			
+	        // paging bar on the bottom
+	        bbar: pagingBar
+			
+		});
+		var prevalue_comb;//保留选择前的值，为了修改时VR类别不可改
+
+		var inputForm = new Ext.FormPanel({
+			labelSeparator : ":",
+			id:"formId",
+			frame:true,
+			border:false,
+			autoHeight: true,
+			labelWidth : 130, 
+			items : [
+		         {
+                      xtype:'combo',
+                      fieldLabel:'更新类型',
+                      name : 'updatetype',
+                      allowBlank : false,
+                      blankText : '更新类型为必填项',
+                      hiddenName : 'updatetype',
+                      store: Ext.exampledata.updatetype_list,
+                      typeAhead: true,
+                      forceSelection: true,
+                      triggerAction: 'all',
+                      emptyText:'请选择其中一种...',
+                      selectOnFocus:true,
+                      value: '1',
+                      listeners:{
+		                 select:{
+		                     fn:function(txt,e){
+		                         var update = $("#updatetype").val();
+		                         dealXmlInput(update);
+		                     }
+		                 }
+		             }
+                },
+                {
+                    xtype:'label',
+                    id:'subttt',
+                    hidden:true,
+                    html:"<font color=red size=2>请到<a href=\"http://dev.sogou-inc.com/web_spider/supplyfetch.html\" target=_blank>http://dev.sogou-inc.com/web_spider/supplyfetch.html</a>提交补抓请求。</font><br>&nbsp;"
+                },
+                {
+                    layout:'form',
+                    columnWidth:.36,
+                    border:false,
+                    id:"urlDiv",
+                    items:[{
+    					xtype:'textfield',
+    					width : 350,
+    					allowBlank : false,
+    					blankText : 'URL不能为空',
+    					name : 'url',
+    					id:'url',
+    					fieldLabel:'<font color=red>*</font>URL(6-512字节)',
+    					vtype:'url',
+    					enableKeyEvents : true,
+    					listeners:{
+    						keypress:{fn:function(txtcomp, eventobj ){Ext.getCmp('btn_submmit').disable();}},
+    						change:{
+    						    fn:function(txtcomp, eventobj ){
+        						    loadXmlByUrl();
+    						    }
+    						}//change ends
+    					}
+                    }]                       
+				},{
+				    layout:'form',
+	                columnWidth:.36,
+	                border:false,
+	                id:"tpxmlDiv",
+	                items:[{
+    					xtype:'textarea',
+    					width : 550,
+    					height : 300,
+    					name : 'tpxml',
+    					id:'tpxml',
+    					fieldLabel:'<font color=red>*</font>XML片段',
+    					allowBlank : false,
+    					value: ''
+	                }]
+				},{
+				    layout:'form',
+                    columnWidth:.36,
+                    border:false,
+                    id:"start_timeDiv",
+                    items:[{
+                    	xtype:'textfield',
+                    	width : 150,
+                    	allowBlank : false,
+                    	id : 'start_time_string',
+    					name : 'start_time_string',
+    					fieldLabel:'<font color=red>*</font>上线日期',
+    					cls:'Wdate'
+    					//value: getTimeAfterNow(0)
+                    }]
+                },{
+                    layout:'form',
+                    columnWidth:.36,
+                    border:false,
+                    id:"end_timeDiv",
+                    items:[{
+    					xtype:'textfield',
+    					width : 150,
+    					allowBlank : false,
+    					id : 'end_time_string',
+    					name : 'end_time_string',
+    					fieldLabel:'<font color=red>*</font>下线日期',
+    					cls:'Wdate'
+    					//value: getTimeAfterNow(1*24*60)
+                    }]
+		        },{
+                    xtype:'hidden',
+                    name : 'id'
+                }
+			],
+			buttons:[
+				{
+					text : '验证并预览',
+					id : 'btn_preview',
+					hidden:true,
+					//handler : previewForm
+				},{
+					text : '提交',
+					id : 'btn_submmit',
+					handler : submitForm
+				},
+				{
+					text : '关闭',
+					handler : function(){
+						win.hide();
+					}
+				}
+			]
+		});
+		//删除原有窗口对象
+		win = Ext.getCmp('input_window');
+		if(win){
+			win.destroy();
+		}
+		var win = new Ext.Window({
+			id: 'input_window',
+			layout:'fit',
+		    width:750,
+		    closeAction:'hide',
+			resizable : false,
+			shadow : true,
+			modal :true,
+		    closable:true,
+		    bodyStyle:'padding:5 5 5 5',
+		    animCollapse:true,
+			items:[inputForm],
+			y: 20
+		});
+		var timer = null;
+		function dealXmlInput(update){
+		    if(update=='0'){
+		        $("#subttt").removeClass("x-hide-display");
+		        $("#urlDiv").hide();
+		        $("#tpxmlDiv").hide();
+		        $("#end_timeDiv").hide();
+		        $("#start_timeDiv").hide();
+		        $("#input_window").css("height","180px");
+		        $(".xsc").remove();
+		        $(".x-shadow").remove();
+		        //clearTimeout(timer);
+		    }else{
+		        $("#subttt").addClass("x-hide-display");
+                $("#urlDiv").show();
+                $("#tpxmlDiv").show();
+                $("#end_timeDiv").show();
+                $("#start_timeDiv").show();
+                $("#input_window").css("height","530px");
+                //timer = setTimeout(loadXmlByUrl,50);
+		    }
+		}
+	    function loadjs(js_addr){
+	        var head = document.getElementsByTagName("head")[0],
+	        node = document.createElement("script");
+	        node.type = "text/javascript";
+	        node.src = js_addr;
+	        head.appendChild(node);
+	    }
+	    window.umis_get_xpage=function(data){
+	        if(data&&data.xpage){
+	            $("#tpxml").val(data.xpage);
+	            Ext.getCmp('btn_submmit').enable();
+	        }else{
+	            Ext.getCmp('btn_submmit').disable();
+	        }
+	    }
+		function loadXmlByUrl(){
+		    var url = $("#url").val();
+		    if(url){
+    		    loadjs("http://paplatform.web.sjs.nop.vm.sogou-op.org/umis/manual_override/get_xpage_template?url="+url);
+		    }
+		}
+		//显示新建网页前台限制词记录窗口
+		function showAdd(){
+			inputForm.form.reset();
+			inputForm.isAdd = true;
+			win.setTitle("新增Summary/快照人工干预");
+			win.show();
+			bindingPicker();
+
+			$("#url").val($("#query_url").val());
+			//Ext.getCmp("url").getEl().dom.value = document.getElementById("query_url").value ;
+			Ext.getCmp('btn_submmit').disable();//默认不可点
+			//表单前两个标签可变
+			//Ext.getCmp('url').getEl().dom.readOnly = false;
+		}
+		String.prototype.replaceAll  = function(s1,s2){    
+			return this.replace(new RegExp(s1,"gm"),s2);    
+		}
+		//显示修改网页前台限制词记录窗口
+		function showModify(){
+			var recordList = getCheckedIdList();
+			var num = recordList.length;
+			if(num > 1){
+				Ext.MessageBox.alert("提示","每次只能修改一条记录信息。")
+			}else if(num == 1){
+				inputForm.isAdd = false;
+				win.setTitle("修改记录信息");
+				win.show();
+				bindingPicker();
+				var recordId = recordList[0];
+				loadForm(recordId);
+			}
+			//Ext.getCmp('btn_submmit').disable();//默认不可点
+			
+			//表单两个隐藏字段进行设置，前两个标签不可变
+			Ext.getCmp("updatetype").getEl().dom.readOnly =true;
+			Ext.getCmp('url').getEl().dom.readOnly = true;
+		}
+		function bindingPicker(){
+			//给上下线时间预置当前时间和翌日当前时间
+			Ext.getCmp('start_time_string').setValue(getTimeAfterNow(0));
+			Ext.getCmp('end_time_string').setValue(getTimeAfterNow(3*24*60));
+
+			document.getElementById('start_time_string').onclick = function(){
+				WdatePicker({skin:'ext',dateFmt:'yyyy-MM-dd HH:mm:ss',	maxDate:'#F{$dp.$D(\'end_time_string\')}'  });
+			};
+			document.getElementById('end_time_string').onclick = function(){
+				WdatePicker({      skin:'ext',    dateFmt:'yyyy-MM-dd HH:mm:ss',    minDate:'#F{$dp.$D(\'start_time_string\')}' });
+			};
+		}
+		//显示删除网页前台限制词记录对话框
+		function showDelete(){
+			var recordIdList = getCheckedIdList();
+			var num = recordIdList.length;
+			if(num > 1){
+				Ext.MessageBox.alert("提示","每次只能删除一条记录信息。")
+			}else if(num == 1){
+				Ext.MessageBox.confirm("提示","您确定要删除所选记录吗？",function(btnId){
+					if(btnId == 'yes')
+						deleteRecord(recordIdList);
+				});
+			}
+			else{//0
+				return;
+			}
+		}
+		//删除网页前台限制词记录
+		function deleteRecord(recordIdList){
+			var msgTip = Ext.MessageBox.show({
+				title:'提示',
+				width : 250,
+				msg:'正在删除此记录信息请稍后......'
+			});
+			Ext.Ajax.request({
+				url : 'webSnap.do?method=deleteRecord',
+				params : {recordIdList : recordIdList.toString()},
+				method : 'GET',
+				success : function(response,options){
+					msgTip.hide();
+					var result = Ext.util.JSON.decode(response.responseText);
+					if(result.success){
+						//服务器端数据成功删除后，同步删除客户端列表中的数据
+						store.load({params:{start:0, limit:18}});
+						Ext.Msg.alert('提示','删除记录成功。');
+					}else{
+						Ext.Msg.alert('提示','删除记录失败！');
+					}
+				},
+				failure : function(response,options){
+					msgTip.hide();
+					Ext.Msg.alert('提示','删除记录失败！');
+				}
+			});
+		}
+		//加载表单数据
+		function loadForm(recordId){
+			inputForm.form.load({
+				waitMsg : '正在加载数据请稍后',//提示信息
+				waitTitle : '提示',//标题
+				url : 'webSnap.do?method=getRecordById',//请求的url地址
+				params : {recordId : recordId},
+				method:'GET',//请求方式
+				success:function(form,action){//加载成功的处理函数
+//					Ext.getCmp('form_classtag').setValue( vrtypeStore.getById(comb.getValue()).get('classtag') );
+//					Ext.getCmp('form_vrtemplate_num').setValue( vrtypeStore.getById(comb.getValue()).get('vrtemplate_tplid') );
+//					prevalue_comb = comb.getValue();//修改时不可改
+				},
+				failure:function(form,action){//加载失败的处理函数
+					Ext.Msg.alert('提示','数据加载失败');
+				}
+			});
+		}
+		
+		//提交表单数据
+		function submitForm(){
+			//判断当前执行的提交操作，isAdd为true表示执行网页前台限制词记录新增操作，false表示执行网页前台限制词记录修改操作
+			if( inputForm.form.isValid() ){
+				//设定上下线时间控件的范围
+				var now_time = getTimeAfterNow(0);
+				var end_time_var = Ext.getCmp('end_time_string').getValue();
+				if( end_time_var < now_time){//下线时间不能在当前时间之前
+					Ext.MessageBox.show({
+			           title: '提示',
+			           msg: '下线时间不能在当前时间之前!',
+			           buttons: Ext.MessageBox.OK,
+			           icon: Ext.MessageBox.WARNING
+			        });
+				}
+				else{
+					if(inputForm.isAdd){
+						//新增网页前台限制词记录信息
+						inputForm.form.submit({
+							clientValidation:true,//进行客户端验证
+							waitMsg : '正在提交数据请稍后',//提示信息
+							waitTitle : '提示',//标题
+							url : 'webSnap.do?method=addRecord',//请求的url地址
+							method:'POST',//请求方式
+							success:function(form,action){//加载成功的处理函数
+								win.hide();
+								store.load({params:{start:0, limit:18}});
+								Ext.Msg.alert('提示','新增固排记录成功');
+							},
+							failure:function(form,action){//新增失败的处理函数
+								var failcause = action.result.cause;
+								Ext.MessageBox.show({
+						           title: '提示',
+						           msg: '新增固排记录失败。原因是:<br>'+failcause,
+						           buttons: Ext.MessageBox.OK,
+						           icon: Ext.MessageBox.ERROR
+						        });
+							}
+						});
+					}//if
+					else{
+						//修改网页前台限制词记录信息
+						inputForm.form.submit({
+							clientValidation:true,//进行客户端验证
+							waitMsg : '正在提交数据请稍后',//提示信息
+							waitTitle : '提示',//标题
+							url : 'webSnap.do?method=modifyRecord',//请求的url地址
+							method:'POST',//请求方式
+							success:function(form,action){//加载成功的处理函数
+								win.hide();
+								store.load({params:{start:0, limit:18}});
+								Ext.Msg.alert('提示','修改固排记录成功');
+							},
+							failure:function(form,action){//加载失败的处理函数
+								var failcause = action.result.cause;
+								Ext.MessageBox.show({
+						           title: '提示',
+						           msg: '修改固排记录失败。原因是:<br>'+failcause,
+						           buttons: Ext.MessageBox.OK,
+						           icon: Ext.MessageBox.ERROR
+						        });
+							}
+						});
+					}//else
+				}//else
+			}//if( inputForm.form.isValid() )
+		}
+		//取得表单数据
+		function getFormFieldsObj(domainRecordId){
+			var fields = inputForm.items;
+			var obj = {};
+			for(var i = 0 ; i < fields.length ; i++){
+				var item = 	fields.itemAt(i);
+				var value = item.getValue();
+				obj[item.name] = value;
+			}
+			if(Ext.isEmpty(obj['id'])){
+				obj['id'] = domainRecordId;
+			}
+			//补充另外两个属性tag_block和tag_reversible
+			if( Ext.getCmp('tag_block_group').items.get(0).checked )
+				obj['tag_block'] = 1 ;
+			else
+				obj['tag_block'] = 0 ;
+			if( Ext.getCmp('tag_reversible_group').items.get(0).checked )
+				obj['tag_reversible'] = 1 ;
+			else
+				obj['tag_reversible'] = 0 ;
+			return obj;
+		}
+		//取得所选域名记录信息
+		function getCheckedIdList(){
+			var recs = recordGrid.getSelectionModel().getSelections();
+			var list = [];
+			if(recs.length == 0){
+				Ext.MessageBox.alert('提示','请选择要进行操作的记录！');
+			}else{
+				for(var i = 0 ; i < recs.length ; i++){
+					var rec = recs[i];
+					list.push(rec.get('id'));
+				}
+			}
+			return list;
+		}
+		window.umis_update_status=function(data){
+		    if(data){
+		        alert(data.message);
+		    }
+		}
+		//线上同步词表
+		function synchronize(){
+            loadjs("http://paplatform.web.sjs.nop.vm.sogou-op.org/umis/manual_override/do_update");
+		}
+
+		function compareDate(d1, d2) {  // 比较时间的方法，d1时间比d2时间大，则返回true
+		    return Date.parse(d1.replace(/-/g, "/")) > Date.parse(d2.replace(/-/g, "/"))  
+		} 
+		function biggerDate(d1, d2) {  // 得到较大日期
+			if(compareDate(d1,d2))
+				return d1;
+			else
+				return d2;
+		} 
+		function getTimeAfterNow(after_mnt){ //当前日期后after_mnt分钟
+			var clock = '';
+		    var now = new Date();
+		    now.setMinutes(now.getMinutes()+after_mnt);
+		    
+		    var yy = now.getFullYear(); 
+		    var month = now.getMonth()+1;
+		    var dd = now.getDate();
+
+		    clock = yy + '-';
+		    if (month < 10) clock += '0'; 
+		    clock += month+'-'; 
+		    if (dd < 10) clock += '0'; 
+		    clock += dd+' '; 
+		    
+		    var hh = now.getHours(); 
+		    var mm = now.getMinutes(); 
+		    var ss = now.getTime() % 60000; 
+		    ss = (ss - (ss % 1000)) / 1000; 
+
+		    if (hh < 10) clock += '0'; 
+		    clock += hh+':'; 
+		    if (mm < 10) clock += '0'; 
+		    clock += mm+':'; 
+		    if (ss < 10) clock += '0'; 
+		    clock += ss; 
+		    return(clock); 
+		}
+
+		function classid_renderer(val, p, record){
+			if(vrtypeStore.getById(val)!=null)
+				return vrtypeStore.getById(val).get('chname');
+			else
+				return '加载中...';
+		}
+		
+		var escapespecial={"¤":"%A1%E8","§":"%A1%EC","¨":"%A1%A7","°":"%A1%E3","±":"%A1%C0","·":"%A1%A4","×":"%A1%C1","à":"%A8%A4","á":"%A8%A2","è":"%A8%A8","é":"%A8%A6","ê":"%A8%BA","ì":"%A8%AC","í":"%A8%AA","ò":"%A8%B0","ó":"%A8%AE","÷":"%A1%C2","ù":"%A8%B4","ú":"%A8%B2","ü":"%A8%B9","+":"%2B"};
+		function rescape(s) {
+	        var r = ""
+	        if (typeof(s) == "undefined")
+	                return r
+	        for (var i=0;i<s.length; i++) {
+	                var c = s.charAt(i);
+	                if( typeof(escapespecial[c]) != "undefined")
+	                        r=r+escapespecial[c];
+	                else
+	                        r=r+escape(c);
+	        }
+	        return r;
+		}
+			
+		//开始查询代码
+		function query(tag){
+			var query_url ;
+			if(tag)
+				query_url = document.getElementById("query_url").value;
+			else{
+				query_url = '';
+				document.getElementById("query_url").value='';
+			}
+			var query_matchType;
+			if(document.getElementsByName("query_matchType")[0].checked)
+				query_matchType = 1;
+			else
+				query_matchType = 0;
+			var status;
+			var statusName = document.getElementsByName("syncstatus");
+            if(statusName[0].checked)
+                status = 0;
+            else if(statusName[1].checked)
+                status = 1;
+            else if(statusName[2].checked)
+                status = 2;
+            else if(statusName[3].checked)
+                status = 3;
+            else if(statusName[4].checked)
+                status = 4;
+            else
+                status = 0;
+			
+			var url = "webSnap.do?method=getRecordList&query_url="+encodeURIComponent(query_url)+"&query_matchType="+query_matchType+"&status="+status;
+			store.proxy.conn.url = url;
+			store.load({params:{start:0, limit:18}});
+		}
+		
+		dr.render('dr');
+		
+	});
+</script>
+<body>
+
+<div id="dr" style="width:100%;height:20%;"></div>
+<div id="progress-div" style="width:100%;height:4%;display:none"></div>
+<div id='grid-div' style="width:100%; height:76%;"></div>
+</body>
+</html>
+<style type="text/css">
+	.vrnews {
+		color:#9C9C9C;
+		font-size:13px;
+		line-height:1.4;
+	}
+	.vrnews ul {
+		list-style-image:none;
+		list-style-position:outside;
+		list-style-type:none;
+		padding-left:16px;
+	}
+	#content {
+		clear:left;
+		margin-bottom:28px;
+		width:533px;
+	}
+	#content DIV {	
+		PADDING-RIGHT: 10px;	
+		PADDING-LEFT: 10px;	
+		MARGIN-BOTTOM: 19px;	
+		PADDING-BOTTOM: 0px;	
+		PADDING-TOP: 0px
+	}
+	#content h2, #content h3 {
+		color:#9C9C9C;
+		font-weight:normal;
+	}
+	#content h2 a, #content h3 a {
+		font-size:16px;
+	}
+	a:link {
+		color:#0000CC;
+		text-decoration:underline;
+	}
+	#content p {
+		font-size:13px;
+		font-family:Arial,Helvetica,sans-serif;
+		line-height:1.4;
+		text-align:justify;
+	}
+	.url, .agentads .url, .agentads .url a:link, .agentads .url a:visited {
+		color:#008000;
+	}
+</style>
