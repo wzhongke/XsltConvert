@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        /*
+         一、 transform: none|<transform-function>[ <transform-function>]*;
+            transform-function 有：
+            1. translate(<x>, [,<y>) [translateX()/ translateY()]: 沿着X和Y轴移动元素, 移动的位置
+            2. scale(<width>[,<height>]) [scaleX()/ scaleY()]: 改变元素的宽度和高度，取值包括正数、负数和小数
+            3. rotate(<angle>) : 旋转元素对象，取值为一个度数值
+            4. skew(<x> [, <y>]) :   倾斜元素对象，取值为一个度数值
+
+            transform-origin: x-axis (定义视图被置于X轴的何处，可能值是left\center\right\bottom\length\%)
+                              y-axis (定义视图被置于Y轴的何处)
+                              z-axis;
+
+        二、 transitions 动画
+              transition ： 简写属性，用于在一个属性中设置四个过度属性
+              transition-property none|all|property: 规定应用过渡的CSS属性的名称
+              transition-duration time: 定义过渡花费的时间，默认是0
+              transition-timing-function: 定义过渡效果的时间曲线，默认是 "ease"
+                    linear: 规定以相同的速度开始至结束的过渡效果
+                    ease : 规定以慢速开始，然后变快，然后慢速结束
+                    ease-in : 规定以慢速开始的过渡效果
+                    ease-out: 规定以慢速结束的过渡效果
+                    cubic-bezier(n,n,n,n): 在cubic-bezier中定义自己的值，可以是0到1之间
+              transition-delay time: 规定过渡效果何时开始
+        */
+        .rotate a:hover {
+            -webkit-transform: rotate(45deg);
+            -moz-transform: rotate(45deg);
+            -ms-transform: rotate(45deg);
+            -o-transform: rotate(45deg);
+            transform: rotate(45deg);
+        }
+
+        .scale a:hover {
+            -webkit-transform: scale(0.8, 0.8);
+            -moz-transform: scale(0.8, 0.8);
+            -ms-transform: scale(0.8, 0.8);
+            -o-transform: scale(0.8, 0.8);
+            transform: scale(0.8, 0.8);
+        }
+
+        .scale-x a:hover {
+            -webkit-transform: scaleX(0.8);
+            -moz-transform: scaleX(0.8);
+            -ms-transform: scaleX(0.8);
+            -o-transform: scaleX(0.8);
+            transform: scaleX(0.8);
+        }
+
+        .scale-y a:hover {
+            -webkit-transform: scaleY(1.2);
+            -moz-transform: scaleY(1.2);
+            -ms-transform: scaleY(1.2);
+            -o-transform: scaleY(1.2);
+            transform: scaleY(1.2);
+        }
+        
+        .translate a:hover {
+            -webkit-transform: translate(-10px, -10px);
+            -moz-transform: translate(-10px, -10px);
+            -ms-transform: translate(-10px, -10px);
+            -o-transform: translate(-10px, -10px);
+            transform: translate(-10px, -10px);
+        }
+
+        .translate-x a:hover {
+            -webkit-transform: translateX(10px);
+            -moz-transform: translateX(10px);
+            -ms-transform: translateX(10px);
+            -o-transform: translateX(10px);
+            transform: translateX(10px);
+        }
+
+        .translate-y a:hover {
+            -webkit-transform: translateY(10px);
+            -moz-transform: translateY(10px);
+            -ms-transform: translateY(10px);
+            -o-transform: translateY(10px);
+            transform: translateY(10px);
+        }
+        
+        .skew a:hover {
+            -webkit-transform: skew(15deg, 15deg);
+            -moz-transform: skew(15deg, 15deg);
+            -ms-transform: skew(15deg, 15deg);
+            -o-transform: skew(15deg, 15deg);
+            transform: skew(15deg, 15deg);
+        }
+
+        .skew-x a:hover {
+            -webkit-transform: skewX(15deg);
+            -moz-transform: skewX(15deg);
+            -ms-transform: skewX(15deg);
+            -o-transform: skewX(15deg);
+            transform: skewX(15deg);
+        }
+
+        .skew-y a:hover {
+            -webkit-transform: skewY(-15deg);
+            -moz-transform: skewY(-15deg);
+            -ms-transform: skewY(-15deg);
+            -o-transform: skewY(-15deg);
+            transform: skewY(-15deg);
+        }
+        
+        .multi a:hover {
+            -webkit-transform: rotate(20deg) scale(1.2) skew(15deg);
+            -moz-transform: rotate(20deg) scale(1.2) skew(15deg);
+            -ms-transform: rotate(20deg) scale(1.2) skew(15deg);
+            -o-transform: rotate(20deg) scale(1.2) skew(15deg);
+            transform: rotate(20deg) scale(1.2) skew(15deg);
+        }
+
+        .origin a:hover {
+            -webkit-transform-origin:left top;
+            -moz-transform-origin:left top;
+            -ms-transform-origin:left top;
+            -o-transform-origin:left top;
+            transform-origin:left top;
+            -webkit-transform: rotate(20deg) scale(1.2) skew(15deg);
+            -moz-transform: rotate(20deg) scale(1.2) skew(15deg);
+            -ms-transform: rotate(20deg) scale(1.2) skew(15deg);
+            -o-transform: rotate(20deg) scale(1.2) skew(15deg);
+            transform: rotate(20deg) scale(1.2) skew(15deg);
+        }
+    </style>
+    <style>
+        .clearfix li{
+            display: block;
+        }
+        .menu ul li a {
+            color : #fff;
+            float: left;
+            margin: 0 5px;
+            font-size:14px;
+            height:50px;
+            line-height: 50px;
+            text-align: center;
+            width:65px;
+            padding:10px 5px;
+            background : #151515;
+            border-radius: 5px 5px 5px 5px;
+            -moz-border-radius: 5px 5px 5px 5px;
+            -webkit-border-radius: 5px 5px 5px 5px;
+            -webkit-box-shadow: 0 0 1px #ccc, inset 0 0 2px #fff;
+            -moz-box-shadow: 0 0 1px #ccc, inset 0 0 2px #fff ;
+            box-shadow: 0 0 1px #ccc, inset 0 0 2px #fff ;
+            text-shadow: 0 1px 1px #686868;
+            text-decoration: none;
+        }
+        .menu ul li.translate a {
+            background: #2EC702;
+        }
+        .menu ul li.translate-x a {
+            background: #8FDD21;
+        }
+        .menu ul li.translate-y a {
+            background: #F45917;
+        }
+        .menu ul li.rotate a {
+            background: #D50E19;
+        }
+        .menu ul li.scale a {
+            background: #cdddf2;
+        }
+        .menu ul li.scale-x a {
+            background: #0fdd21;
+        }
+        .menu ul li.scale-y a {
+            background: #cd5917;
+        }
+        .menu ul li.skew a {
+            background: #519;
+        }
+        .menu ul li.skew-x a {
+            background: #d50;
+        }
+        .menu ul li.multi a{
+            background: #990e10;
+        }
+        .menu ul li.origin a{
+            background: #2e9967;
+        }
+    </style>
+</head>
+<body>
+<h3>CSS 旋转效果 </h3>
+<div class="menu">
+    <ul class="clearfix">
+        <li class="item rotate"><a href="#">Rotate</a></li>
+        <li class="item scale"><a href="#">scale</a></li>
+        <li class="item scale-x"><a href="#">scale-x</a></li>
+        <li class="item scale-y"><a href="#">scale-y</a></li>
+        <li class="item translate"><a href="#">translate</a></li>
+        <li class="item translate-x"><a href="#">translate-x</a></li>
+        <li class="item translate-y"><a href="#">translate-y</a></li>
+        <li class="item skew"><a href="#">skew</a></li>
+        <li class="item skew-x"><a href="#">skew-x</a></li>
+        <li class="item skew-y"><a href="#">skew-y</a></li>
+        <li class="item multi"><a href="#">multi</a></li>
+        <li class="item origin"><a href="#">origin</a></li>
+    </ul>
+</div>
+
+</body>
+</html>

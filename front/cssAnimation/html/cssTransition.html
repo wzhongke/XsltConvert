@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        /*
+        二、 transitions 动画
+        transition ： 简写属性，用于在一个属性中设置四个过度属性
+        transition-property none|all|property: 规定应用过渡的CSS属性的名称
+        transition-duration time: 定义过渡花费的时间，默认是0
+        transition-timing-function: 定义过渡效果的时间曲线，默认是 "ease"
+        linear: 规定以相同的速度开始至结束的过渡效果
+        ease : 规定以慢速开始，然后变快，然后慢速结束
+        ease-in : 规定以慢速开始的过渡效果
+        ease-out: 规定以慢速结束的过渡效果
+        cubic-bezier(n,n,n,n): 在cubic-bezier中定义自己的值，可以是0到1之间
+                             transition-delay time: 规定过渡效果何时开始
+       */
+        body {
+            background-color: #f0f3f9;
+            margin:20px;
+        }
+        .trans-box {
+            padding: 20px;
+        }
+        .trans-list {
+            width: 5%;
+            height: 64px;
+            margin: 10px 0;
+            background-color: #486AAA;
+            color: #fff;
+            text-align: center;
+        }
+        div.test {
+            width: 100px;
+            height: 100px;
+            background: red;
+            transition-property: all;
+            transition-duration: 2s;
+
+        }
+        div.test:hover {
+            width: 300px;
+            height:300px;
+        }
+        .trans-box:hover .trans-list{
+            margin-left: 80%;
+            background-color: blue;
+            color : black;
+            -webkit-border-radius:25px;
+            -moz-border-radius:25px;
+            border-radius:25px;
+            -webkit-transform: rotate(360deg);
+            -moz-transform: rotate(360deg);
+            -ms-transform: rotate(360deg);
+            -o-transform: rotate(360deg);
+            transform: rotate(360deg);
+        }
+        
+        .ease {
+            -webkit-transition: all 4s ease;
+            -moz-transition: all 4s ease;
+            -ms-transition: all 4s ease;
+            -o-transition: all 4s ease;
+            transition: all 4s ease;
+        }
+        .ease-in {
+            -webkit-transition: all 4s ease-in;
+            -moz-transition: all 4s ease-in;
+            -ms-transition: all 4s ease-in;
+            -o-transition: all 4s ease-in;
+            transition: all 4s ease-in;
+        }
+        .ease-out {
+            -webkit-transition: all 4s ease-out;
+            -moz-transition: all 4s ease-out;
+            -ms-transition: all 4s ease-out;
+            -o-transition: all 4s ease-out;
+            transition: all 4s ease-out;
+        }
+        .ease-in-out {
+            -webkit-transition: all 4s ease-in-out;
+            -moz-transition: all 4s ease-in-out;
+            -ms-transition: all 4s ease-in-out;
+            -o-transition: all 4s ease-in-out;
+            transition: all 4s ease-in-out;
+        }
+        .linear {
+            -webkit-transition: all 4s linear;
+            -moz-transition: all 4s linear;
+            -ms-transition: all 4s linear;
+            -o-transition: all 4s linear;
+            transition: all 4s linear;
+        }
+        .cubic-bezier {
+            -webkit-transition: all 4s cubic-bezier(0.42, 0, 0, 1);
+            -moz-transition: all 4s cubic-bezier(0.42, 0, 0, 1) ;
+            -ms-transition: all 4s cubic-bezier(0.42, 0, 0, 1) ;
+            -o-transition: all 4s cubic-bezier(0.42, 0, 0, 1) ;
+            transition: all 4s cubic-bezier(0.42, 0, 0, 1) ;
+        }
+    </style>
+</head>
+<body>
+<h3>transitions动画</h3>
+<div class="test"></div>
+<div id="transBox" class="trans-box">
+    <div class="trans-list ease">ease</div>
+    <div class="trans-list ease-in">ease-in</div>
+    <div class="trans-list ease-out">ease-in</div>
+    <div class="trans-list ease-in-out">ease-in</div>
+    <div class="trans-list linear">ease-in</div>
+    <div class="trans-list cubic-bezier">ease-in</div>
+</div>
+</body>
+</html>

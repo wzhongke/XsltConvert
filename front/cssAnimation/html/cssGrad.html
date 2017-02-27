@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+      /*  CSS3 定义了两种类型的渐变： 线性渐变、径向渐变
+        linear-gradient([<point> || <angle>]?<stop>,<stop>[,<stop>]*)
+        第一个参数表示线性渐变的方向（角度）top是从上到下，left是从左到右， left top是从左上角到右下角
+        第二个和第三个参数分别是起点颜色和终点颜色，可以在它们之间插入更多的参数，表示多种颜色的渐变
+        CSS3 径向渐变
+        radial-gradient([bg-position||<angle>]?[<shape>||<size>,]?<color-stop>,<color-stop>[,<color-stop>]*)
+        */
+        
+        #grad1 {
+            height:200px;
+            background: -webkit-linear-gradient(red, green);
+            background: -o-linear-gradient(red, green);
+            background: -moz-linear-gradient(red, green);
+            background: linear-gradient(red, green);  /* 标准语法，必须在最后 */
+        }
+        #grad2 {
+            height:200px;
+            background: -webkit-linear-gradient(left, red, green);
+            background: -o-linear-gradient(left, red, green);
+            background: -moz-linear-gradient(left, red, green);
+            background: linear-gradient(left, red, green);
+        }
+        
+        #grad3 {
+            height: 200px;
+            background: -webkit-linear-gradient(45deg, red, green);
+            background: -o-linear-gradient(45deg, red, green);
+            background: -moz-linear-gradient(45deg, red, green);
+            background: linear-gradient(45deg, red, green);
+        }
+        #grad4 {
+            height: 200px;
+            background: -webkit-linear-gradient(red, green, blue);
+            background: -o-linear-gradient(red, green, blue);
+            background: -moz-linear-gradient(red, green, blue);
+            background: linear-gradient(red, green, blue);
+        }
+        
+        #grad5 {
+            height:150px;
+            width: 200px;
+            background: -webkit-radial-gradient(red, green, blue);
+            background: -o-radial-gradient(red, green, blue);
+            background: -moz-radial-gradient(red, green, blue);
+            background: radial-gradient(red, green, blue);
+        }
+
+        #grad6{
+            height:150px;
+            width: 200px;
+            background: -webkit-radial-gradient(red 5%, green 15%, blue 60%);
+            background: -o-radial-gradient(red 5%, green 15%, blue 60%);
+            background: -moz-radial-gradient(red 5%, green 15%, blue 60%);
+            background: radial-gradient(red 5%, green 15%, blue 60%);
+        }
+
+        #grad7 {
+            height: 150px;
+            width: 200px;
+            /* 默认是椭圆 */
+            background: -webkit-radial-gradient(circle, red, yellow, green);
+            background: -o-radial-gradient(circle, red, yellow, green);
+            background: -moz-radial-gradient(circle, red, yellow, green);
+            background: radial-gradient(circle, red, yellow, green);
+        }
+        #grad8 {
+            height:150px;
+            width: 200px;
+            background: -webkit-radial-gradient(60% 55%, closest-side, blue, green, yellow, black);
+            background: -o-radial-gradient(60% 55%, closest-side, blue, green, yellow, black);
+            background: -moz-radial-gradient(60% 55%, closest-side, blue, green, yellow, black);
+            background: radial-gradient(60% 55%, closest-side, blue, green, yellow, black);
+        }
+      #grad9 {
+          height:150px;
+          width: 200px;
+          background: -webkit-radial-gradient(60% 55%, farthest-side, blue, green, yellow, black);
+          background: -o-radial-gradient(60% 55%, farthest-side, blue, green, yellow, black);
+          background: -moz-radial-gradient(60% 55%, farthest-side, blue, green, yellow, black);
+          background: radial-gradient(60% 55%, farthest-side, blue, green, yellow, black);
+      }
+      #grad10 {
+          height:150px;
+          width: 200px;
+          background: -webkit-radial-gradient(60% 55%, closest-corner, blue, green, yellow, black);
+          background: -o-radial-gradient(60% 55%, closest-corner, blue, green, yellow, black);
+          background: -moz-radial-gradient(60% 55%, closest-corner, blue, green, yellow, black);
+          background: radial-gradient(60% 55%, closest-corner, blue, green, yellow, black);
+      }
+      #grad11 {
+          height:150px;
+          width: 200px;
+          background: -webkit-radial-gradient(60% 55%, farthest-corner, blue, green, yellow, black);
+          background: -o-radial-gradient(60% 55%, farthest-corner, blue, green, yellow, black);
+          background: -moz-radial-gradient(60% 55%, farthest-corner, blue, green, yellow, black);
+          background: radial-gradient(60% 55%, farthest-corner, blue, green, yellow, black);
+      }
+
+
+    </style>
+</head>
+<body>
+<h3></h3>
+<div id="grad1"></div>
+<h3></h3>
+<div id="grad2"></div>
+<h3></h3>
+<div id="grad3"></div>
+<h3></h3>
+<div id="grad4"></div>
+
+<h3> 径向渐变 -- 颜色结构均匀分布</h3>
+<div id="grad5"></div>
+<h3> 径向渐变 -- 颜色结构不均匀分布</h3>
+<div id="grad6"></div>
+<h3> 径向渐变 -- 形状</h3>
+<div id="grad7"></div>
+<h3>径向渐变 -- 不同尺寸带下关键字的使用</h3>
+<div id="grad8"></div>
+<h3></h3>
+<div id="grad9"></div>
+<h3></h3>
+<div id="grad10"></div>
+<h3></h3>
+<div id="grad11"></div>
+</body>
+</html>
