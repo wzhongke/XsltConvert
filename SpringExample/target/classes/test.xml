@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="gbk"?>
+<table>
+    <!-- 对应的数据库表名 -->
+    <name>ubs_black_web_summary_phone</name>
+    <!-- umis展示的名字 -->
+    <cnName>地址电话</cnName>
+    <!-- 可以搜索的字段 -->
+    <search>
+        <!-- 表中的字段名 -->
+        <case>addr</case>
+    </search>
+    <!-- 是否支持快速同步 -->
+    <quickSync>true</quickSync>
+    <!-- 批量新增字段 -->
+    <batchColumn>keyword</batchColumn>
+    <!-- 同步hub地址，同umis.properties的 umis_blackhub_address 相对应 -->
+    <type>web</type>
+    <!-- 数据库中非通用字段 -->
+    <!-- name: 表中的字段名
+         cnName: 前端展示的中文名
+         showType: 展示的类型
+         showType属性： name-form表单类型(input, select, radio); default-默认值; size-展示的width; min-输入文本的最小长度
+                       max-输入文本的最大长度; batch=true/false - true为批量新增字段，以回车换行为分割，只允许一个column中有
+         -->
+    <!-- showType name="text" 展示为文本框 - input  -->
+    <column>
+        <name>addr</name>
+        <cnName>地址</cnName>
+        <showType name="text" default="" size="400" min="0" max="200"/>
+    </column>
+    <!-- showType name="select" 下拉选择 - (select -option) -->
+    <column>
+        <name>match_type</name>
+        <cnName>匹配方式</cnName>
+        <showType name="select" size="100" default="0" >
+            <item value="0">0:精确匹配</item>
+            <item value="1">1:模糊匹配</item>
+        </showType>
+    </column>
+    <!-- showType name="radio" 单选 -->
+    <column>
+        <name>match_type</name>
+        <cnName>匹配方式</cnName>
+        <showType name="radio" default="1" size="400" min="1">
+            <item value="1">精确匹配</item>
+            <item value="2">模糊匹配</item>
+            <item value="3">组合词匹配</item>
+            <item value="4">精确匹配（过滤特殊符号）</item>
+        </showType>
+    </column>
+</table>

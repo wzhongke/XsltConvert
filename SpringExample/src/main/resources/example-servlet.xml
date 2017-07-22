@@ -6,7 +6,7 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd">
 
     <!-- 自动扫描@Controller -->
-    <context:component-scan base-package="com.wang.controller" />
+    <context:component-scan base-package="com.spring.controller" />
 
     <!-- This allows customizing various settings related to URL mapping and path matching.
          可以设置是否自动过滤后缀，比如 .do -->
@@ -30,7 +30,7 @@
             <list><ref bean="officeHoursInterceptor" /> </list>
         </property>
     </bean>
-    <bean id="officeHoursInterceptor" class="com.wang.intercepting.TimeBasedAccessInterceptor">
+    <bean id="officeHoursInterceptor" class="com.spring.intercepting.TimeBasedAccessInterceptor">
         <property name="openingTime" value="9" />
         <property name="closingTime" value="18" />
     </bean>
@@ -72,7 +72,7 @@
         <mvc:cache-control max-age="3600" cache-public="true" />
     </mvc:resources>
     <!-- HTTP 缓存对于静态资源的支持的java版本 -->
-    <bean class="com.wang.configuration.WebConfig" />
+    <bean class="com.spring.configuration.WebConfig" />
 
     <!-- 配置xml转换器 -->
     <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter">

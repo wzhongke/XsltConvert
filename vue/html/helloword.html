@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hello vue</title>
+    <script src="https://unpkg.com/vue@2.3.4"></script>
+</head>
+<body>
+    <div id="app">{{ message }}</div>
+    <div id="app-2">
+        <!-- v-bind 属性被称为指令，指令指令带有前缀 v-，以表示它们是 Vue 提供的特殊属性。-->
+        <!-- 将这个元素节点的 title 属性和 Vue 实例的 message 属性保持一致 -->
+        <span v-bind:title="message">
+            鼠标悬停几秒钟查看此处动态绑定的提示信息！
+        </span>
+    </div>
+    <div id="app-3">
+        <p v-if="seen">now you see me</p>
+    </div>
+
+    <div id="app-7">
+        <ol>
+            <!-- 现在我们为每个todo-item提供待办项对象    -->
+            <!-- 待办项对象是变量，即其内容可以是动态的 -->
+            <todo-item v-for="item in groceryList" v-bind:todo="item"></todo-item>
+        </ol>
+    </div>
+
+    <script>
+        var app = new Vue({
+            el:'#app',
+            data: {
+                message: 'Hello vue!'
+            }
+        });
+
+        var app2 = new Vue({
+            el: '#app-2',
+            data: {
+                message: '页面加载于' + new Date()
+            }
+        });
+
+        var app3 = new Vue({
+            el: "#app-3",
+            data: {
+                seen: true
+            }
+        });
+
+        // 定义名为 todo-item 的新组件
+        Vue.component('todo-item', {
+            // todo-item 组件现在接受一个
+            // "prop"，类似于一个自定义属性
+            // 这个属性名为 todo。
+            props: ['todo'],
+            template: '<li>{{ todo.text }}</li>'
+        });
+        var app7 = new Vue({
+            el: '#app-7',
+            data: {
+                groceryList: [
+                    { text: '蔬菜' },
+                    { text: '奶酪' },
+                    { text: '随便其他什么人吃的东西' }
+                ]
+            }
+        });
+
+
+        // vue可以扩展为可重用的构造器
+        var MyComponent = Vue.extend({
+            // extension options
+        });
+
+        // 所有MyComponent的实例都会用extension options
+        var myComponentInstance = new MyComponent();
+
+        // Vue的实例代理了data中的所有属性
+        var data = {a:1};
+        var vm = new Vue({
+            el: '#example',
+            data: data
+        });
+        console.log(vm.a);
+        var r = vm.$data === data // -> true
+        vm.$watch('a', function(newVal, oldVal) {
+           // this callback will be called when vm.a changes
+        });
+
+    </script>
+</body>
+</html>

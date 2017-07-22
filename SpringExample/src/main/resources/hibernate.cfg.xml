@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding= 'utf-8'?>
+<!DOCTYPE hibernate-configuration PUBLIC
+        "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
+        "http://hibernate.sourceforge.net/hibernate-configuration-3.0.dtd" >
+
+<hibernate-configuration>
+
+    <session-factory>
+        <property name="show_sql">true</property>
+        <property name="format_sql">true</property>
+        <property name="hibernate.id.new_generator_mappings">false</property>
+        <property name="hibernate.allow_refresh_detached_entity">false</property>
+
+        <!-- Drop and re-create the database schema on startup -->
+        <property name="hbm2ddl.auto">update</property>
+        <mapping class="hibernate.namestrategy.domain.Person" />
+        <mapping class="hibernate.namestrategy.domain.Account" />
+        <mapping class="hibernate.association.domain.Person" />
+        <mapping class="hibernate.association.domain.Phone" />
+        <mapping class="hibernate.association.domain.Address"/>
+    </session-factory>
+</hibernate-configuration>
