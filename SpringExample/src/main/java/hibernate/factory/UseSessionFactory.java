@@ -1,7 +1,7 @@
 package hibernate.factory;
 
 import hibernate.association.domain.Phone;
-import hibernate.namestrategy.domain.Person;
+import hibernate.domain.namestrategy.domain.Person;
 import org.hibernate.Hibernate;
 import org.hibernate.LockMode;
 import org.hibernate.Session;

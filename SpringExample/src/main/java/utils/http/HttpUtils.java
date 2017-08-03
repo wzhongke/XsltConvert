@@ -183,4 +183,7 @@ public class HttpUtils {
         return trustManagerFactory.getTrustManagers();
     }
 
+    public static void main(String [] args) throws IOException {
+        System.out.println(getUrl("http://zhihu.sogou.com.inner"));
+    }
 }

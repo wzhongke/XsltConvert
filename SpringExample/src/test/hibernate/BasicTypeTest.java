@@ -1,15 +1,10 @@
 package hibernate;
 
-import hibernate.namestrategy.customtype.BitSetType;
-import hibernate.namestrategy.domain.Account;
-import hibernate.namestrategy.domain.Person;
+import hibernate.domain.namestrategy.domain.Account;
+import hibernate.domain.namestrategy.domain.Person;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.boot.MetadataBuilder;
-import org.hibernate.boot.MetadataSources;
-import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.engine.jdbc.BlobProxy;
-import org.hibernate.service.ServiceRegistry;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +37,7 @@ public class BasicTypeTest {
             p.setAge(28);
             p.setName("wangzhongke");
             p.setSex(Person.Sex.boy);
-
+            p.setGender(Person.Gender.FEMALE);
             p.setImage(BlobProxy.generateProxy(new byte[]{1, 2, 3}));
 
             p.setBirthDay(LocalDate.of(1990, 12, 1));

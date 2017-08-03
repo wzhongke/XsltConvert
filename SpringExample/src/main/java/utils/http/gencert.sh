@@ -57,3 +57,7 @@ echo "使用如下命令重新加载nginx配置"
 echo "nginx -s reload"
 echo "客户端使用： users/client.p12 和 private/ca.crt"
 
+DATA_DIR=/search/odin/resin/umis/data/normal/news/
+FILE_PATH=website
+
+sh /usr/local/bin/tahr-deploy -f ${FILE_PATH} -p news -m resin

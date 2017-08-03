@@ -1,0 +1,204 @@
+<DOCUMENT>
+    <item>
+        <hunpai stype="wap" tclevel="0" wap="1" showsjb="0" showpc="0" usetc="0" wml5="1"/>
+        <request v="5" os="winnt" tel="wtai://wp/mc;">
+            <isAdapt>false</isAdapt>
+            <pageType>5</pageType>
+            <os>winnt</os>
+        </request>
+        <classid><![CDATA[30010097]]></classid>
+        <tplid>50</tplid>
+        <voiceinfo><![CDATA[为您找到一条百科结果]]></voiceinfo>
+        <display>
+            <citeUrl>搜狗百科 - baike.m.sogou.com</citeUrl>
+            <title><![CDATA[中华人民共和国 - 搜狗百科]]></title>
+            <ext_query>
+                <![CDATA[中华人民共和国官网;中华人民共和国简介;中华人民国;中华人民共和国国歌;中华人民共和国刑法;中华人民共和国财政部;中华人民共和国主席;中华人民共和国地图]]></ext_query>
+            <url>
+                <![CDATA[http://baike.m.sogou.com/baike/fullLemma.jsp?max=&lid=6846&fromTitle=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD]]></url>
+            <xmltype><![CDATA[SINGLEWORD]]></xmltype>
+            <datatype><![CDATA[country_type]]></datatype>
+            <content>
+                <![CDATA[中华人民共和国位于亚洲东部,太平洋西岸, 是工人阶级领导的人民民主专政的社会主义国家,1949年(己丑年)10月1日成立,以五星红旗为国旗,《义勇军进行曲》...]]></content>
+            <content1024>
+                <![CDATA[中华人民共和国位于亚洲东部,太平洋西岸, 是工人阶级领导的人民民主专政的社会主义国家,1949年(己丑年)10月1日成立,以五星红旗为国旗,《义勇军进行曲》为国歌, 国徽内容包括国旗、天安门、齿轮和麦稻穗, 首都...]]></content1024>
+            <content151>
+                <![CDATA[中华人民共和国位于亚洲东部,太平洋西岸, 是工人阶级领导的人民民主专政的社会主义国家,1949年(己丑年)10月1日成立,以五星红旗为国旗,《义勇军进行曲》为国歌, 国徽内容包括国旗、天安门、齿轮和麦稻穗, 首都北京, 省级行政区划为23个省、5个自治区、4个直辖市、2个特别行政区, 是由56个民族构成的统一多民族国家...]]></content151>
+            <cardimage>
+                <![CDATA[http://img03.sogoucdn.com/v2/thumb/resize/w/200/h/160/ir/3/zi/on/iw/80/ih/80/crop/x/15/y/0/w/160/h/160/retype_exclude_gif/ext/auto/q/75?t=2&appid=200549&url=http%3A%2F%2Fpic.baike.soso.com%2Fugc%2Fbaikepic2%2F14051%2Fcut-20170510172327-1365710160.jpg%2F300&referer=http://baike.m.sogou.com/baike/fullLemma.jsp?max=&lid=6846&fromTitle=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD]]></cardimage>
+            <capital name="首都"><![CDATA[北京市]]></capital>
+            <population name="人口"><![CDATA[13.79亿(2016年[2])]]></population>
+            <land_area name="国土面积"><![CDATA[领土领海总面积约1430万平方公里]]></land_area>
+            <national_leader name="国家领袖"><![CDATA[国家主席习近平、国务院总理李克强、全国人大常委会委...]]></national_leader>
+            <currency name="货币"><![CDATA[人民币(港元、澳门币、新台币)]]></currency>
+            <continent name="所属洲"><![CDATA[亚洲]]></continent>
+            <waplink linkurl="http://baike.m.sogou.com/baike/lemmaInfo.jsp?lid=6846&amp;g_ut=3#paragraph_1" level="1">
+                <![CDATA[国家介绍]]></waplink>
+            <waplink linkurl="http://baike.m.sogou.com/baike/lemmaInfo.jsp?lid=6846&amp;g_ut=3#paragraph_13" level="1">
+                <![CDATA[人口发展]]></waplink>
+            <waplink linkurl="http://baike.m.sogou.com/baike/lemmaInfo.jsp?lid=6846&amp;g_ut=3#paragraph_14" level="1">
+                <![CDATA[历史沿革]]></waplink>
+            <waplink linkurl="http://baike.m.sogou.com/baike/lemmaInfo.jsp?lid=6846&amp;g_ut=3#paragraph_22" level="1">
+                <![CDATA[地理位置]]></waplink>
+            <menuNum>4</menuNum>
+            <site><![CDATA[sogou_baike]]></site>
+            <showurl>baike.m.sogou.com</showurl>
+            <date><![CDATA[2017-07-06]]></date>
+            <pagesize><![CDATA[839k]]></pagesize>
+            <anchor_extend><![CDATA[中华人民;中华人民国;中人民共和国;中华人们共和国;中华人名共和国;]]></anchor_extend>
+            <title_term_weight><![CDATA[0 0 0 1 0 0]]></title_term_weight>
+            <title_term_ntype><![CDATA[1048576 1 1 1073741824 67108864 1]]></title_term_ntype>
+            <title_term_tightness><![CDATA[253 253 165 165 165 0]]></title_term_tightness>
+            <title_term_importance><![CDATA[46 50 70 2 16 20]]></title_term_importance>
+            <title_term_occ><![CDATA[0 2 4 8 10 12]]></title_term_occ>
+            <title_term_len><![CDATA[2 2 3 1 2 2]]></title_term_len>
+            <title_termrange><![CDATA[0 2 2 3 1 1 1 2]]></title_termrange>
+            <PicFilter><![CDATA[1]]></PicFilter>
+            <VideoDetected><![CDATA[0]]></VideoDetected>
+            <imagenum_db><![CDATA[0-0]]></imagenum_db>
+            <imagenum_sm><![CDATA[1]]></imagenum_sm>
+            <image_from><![CDATA[3]]></image_from>
+            <FullTitle><![CDATA[中华人民共和国 - 搜狗百科]]></FullTitle>
+            <wapfriendly>1</wapfriendly>
+            <cacheStrategy>qcr:-1</cacheStrategy>
+            <pc_url>
+                <![CDATA[http://baike.sogou.com/v6846.htm?fromTitle=%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD]]></pc_url>
+            <firstbaike><![CDATA[1]]></firstbaike>
+            <showname length="25"><![CDATA[搜狗百科]]></showname>
+        </display>
+        <hasmorewebsinsite>1</hasmorewebsinsite>
+    </item>
+</DOCUMENT>
+
+<item>
+<hunpai stype="wap" tclevel="0" wap="1" showsjb="0" showpc="0" usetc="0" wml5="1"/>
+<request v="5" os="winnt" tel="wtai://wp/mc;">
+    <isAdapt>false</isAdapt>
+    <pageType>5</pageType>
+    <os>winnt</os>
+</request>
+<jhid>JH002</jhid>
+<classid><![CDATA[30010100]]></classid>
+<tplid>50</tplid>
+<voiceinfo><![CDATA[为您找到一条百科结果]]></voiceinfo>
+<display>
+    <citeUrl>搜狗百科 - baike.m.sogou.com</citeUrl>
+    <title><![CDATA[李开复 - 搜狗百科]]></title>
+    <ext_query><![CDATA[李开复林妙可事件;李开复癌症;李开复癌症怎么好的;唐骏;创新工场;李开复自传;陈一舟;李开复简介]]></ext_query>
+    <url>
+        <![CDATA[http://baike.m.sogou.com/baike/fullLemma.jsp?max=&lid=95199&fromTitle=%E6%9D%8E%E5%BC%80%E5%A4%8D]]></url>
+    <xmltype><![CDATA[SINGLEWORD]]></xmltype>
+    <datatype><![CDATA[people_type]]></datatype>
+    <content><![CDATA[李开复(1961年12月3日-),祖籍四川,出生于中国台湾省台北县中和市(今新北市中和区),中学时移民美国,获得美国国籍,1988年获得卡内基梅隆大学计算机系...]]></content>
+    <content1024>
+        <![CDATA[李开复(1961年12月3日-),祖籍四川,出生于中国台湾省台北县中和市(今新北市中和区),中学时移民美国,获得美国国籍,1988年获得卡内基梅隆大学计算机系博士,1998年移居中国北京市,2005年,因离开微软跳槽至谷...]]></content1024>
+    <content151>
+        <![CDATA[李开复(1961年12月3日-),祖籍四川,出生于中国台湾省台北县中和市(今新北市中和区),中学时移民美国,获得美国国籍,1988年获得卡内基梅隆大学计算机系博士,1998年移居中国北京市,2005年,因离开微软跳槽至谷歌的法律纠纷而成为公众的争议焦点.2009年9月4日,从谷歌离职创办创新工场,并任董事长兼首席执行官....]]></content151>
+    <cardimage>
+        <![CDATA[http://img03.sogoucdn.com/v2/thumb/crop/x/0/y/0/w/200/h/200/resize/w/160/h/160/ir/3/zi/on/iw/80/ih/80/retype_exclude_gif/ext/auto/q/75?t=2&appid=200549&url=http%3A%2F%2Fpic.baike.soso.com%2Fp%2F20130323%2Fbki-20130323011946-637765451.jpg&referer=http://baike.m.sogou.com/baike/fullLemma.jsp?max=&lid=95199&fromTitle=%E6%9D%8E%E5%BC%80%E5%A4%8D]]></cardimage>
+    <profession><![CDATA[创新工场董事长兼首席执行官]]></profession>
+    <birth_date name="出生日期" show="1"><![CDATA[1961年12月3日]]></birth_date>
+    <relationship name="关系" show="2">
+        <itemtag newTag="1">
+            <full_item><![CDATA[妻子谢先铃]]></full_item>
+            <tag>
+                <name><![CDATA[妻子]]></name>
+                <href></href>
+            </tag>
+            <tag>
+                <name><![CDATA[谢先铃]]></name>
+                <href>
+                    <![CDATA[http://baike.sogou.com/lemma/ShowInnerLink.htm?lemmaId=54059179&ss_c=ssc.citiao.link]]></href>
+            </tag>
+        </itemtag>
+        <itemtag newTag="1">
+            <full_item><![CDATA[儿女李德宁、李德亭]]></full_item>
+            <tag>
+                <name><![CDATA[儿女]]></name>
+                <href></href>
+            </tag>
+            <tag>
+                <name><![CDATA[李德宁]]></name>
+                <href>
+                    <![CDATA[http://baike.sogou.com/lemma/ShowInnerLink.htm?lemmaId=10846933&ss_c=ssc.citiao.link]]></href>
+            </tag>
+            <tag>
+                <name><![CDATA[、]]></name>
+                <href></href>
+            </tag>
+            <tag>
+                <name><![CDATA[李德亭]]></name>
+                <href>
+                    <![CDATA[http://baike.sogou.com/lemma/ShowInnerLink.htm?lemmaId=64658884&ss_c=ssc.citiao.link]]></href>
+            </tag>
+        </itemtag>
+    </relationship>
+    <representative_works name="代表作品" show="2"><![CDATA[《做最好的自己》]]>
+        <tag>
+            <name><![CDATA[《]]></name>
+            <href></href>
+        </tag>
+        <tag>
+            <name><![CDATA[做最好的自己]]></name>
+            <href><![CDATA[http://baike.sogou.com/lemma/ShowInnerLink.htm?lemmaId=5967012&ss_c=ssc.citiao.link]]></href>
+        </tag>
+        <tag>
+            <name><![CDATA[》]]></name>
+            <href></href>
+        </tag>
+    </representative_works>
+    <achievement name="主要成就" show="1"><![CDATA[09年创办创新工场,曾任Google、微软全球副总裁]]></achievement>
+    <birthland name="出生地" show="2"><![CDATA[中国台湾省新北市中和区]]>
+        <tag>
+            <name><![CDATA[中国台湾省新北市]]></name>
+            <href></href>
+        </tag>
+        <tag>
+            <name><![CDATA[中和区]]></name>
+            <href>
+                <![CDATA[http://baike.sogou.com/lemma/ShowInnerLink.htm?lemmaId=70343115&ss_c=ssc.citiao.link]]></href>
+        </tag>
+    </birthland>
+    <alma_mater name="毕业院校" show="2"><![CDATA[美国卡耐基梅隆大学]]>
+        <tag>
+            <name><![CDATA[美国卡耐基梅隆大学]]></name>
+            <href>
+                <![CDATA[http://baike.sogou.com/lemma/ShowInnerLink.htm?lemmaId=101618394&ss_c=ssc.citiao.link]]></href>
+        </tag>
+    </alma_mater>
+    <chinese_name name="中文名"><![CDATA[李开复]]></chinese_name>
+    <foreign_name name="外文名"><![CDATA[KAI-FU LEE]]></foreign_name>
+    <waplink linkurl="http://baike.m.sogou.com/baike/lemmaInfo.jsp?lid=95199&amp;g_ut=3#paragraph_1" level="1">
+        <![CDATA[词条概要]]></waplink>
+    <waplink linkurl="http://baike.m.sogou.com/baike/lemmaInfo.jsp?lid=95199&amp;g_ut=3#paragraph_2" level="1">
+        <![CDATA[人物简介]]></waplink>
+    <waplink linkurl="http://baike.m.sogou.com/baike/lemmaInfo.jsp?lid=95199&amp;g_ut=3#paragraph_3" level="1">
+        <![CDATA[人物经历]]></waplink>
+    <waplink linkurl="http://baike.m.sogou.com/baike/lemmaInfo.jsp?lid=95199&amp;g_ut=3#paragraph_6" level="1">
+        <![CDATA[家庭成员]]></waplink>
+    <menuNum>4</menuNum>
+    <site><![CDATA[sogou_baike]]></site>
+    <showurl>baike.m.sogou.com</showurl>
+    <date><![CDATA[2017-06-16]]></date>
+    <pagesize><![CDATA[211k]]></pagesize>
+    <title_term_weight><![CDATA[0 1 0 0]]></title_term_weight>
+    <title_term_ntype><![CDATA[2147483648 1073741824 67108864 1]]></title_term_ntype>
+    <title_term_tightness><![CDATA[165 165 165 0]]></title_term_tightness>
+    <title_term_importance><![CDATA[100 2 5 8]]></title_term_importance>
+    <title_term_occ><![CDATA[0 4 6 8]]></title_term_occ>
+    <title_term_len><![CDATA[3 1 2 2]]></title_term_len>
+    <title_termrange><![CDATA[0 3 1 1 1 2]]></title_termrange>
+    <PicFilter><![CDATA[1]]></PicFilter>
+    <VideoDetected><![CDATA[0]]></VideoDetected>
+    <imagenum_db><![CDATA[0-0]]></imagenum_db>
+    <imagenum_sm><![CDATA[1]]></imagenum_sm>
+    <image_from><![CDATA[3]]></image_from>
+    <FullTitle><![CDATA[李开复 - 搜狗百科]]></FullTitle>
+    <wapfriendly>1</wapfriendly>
+    <cacheStrategy>qcr:-1</cacheStrategy>
+    <pc_url><![CDATA[http://baike.sogou.com/v95199.htm?fromTitle=%E6%9D%8E%E5%BC%80%E5%A4%8D]]></pc_url>
+    <firstbaike><![CDATA[1]]></firstbaike>
+    <showname length="25"><![CDATA[搜狗百科]]></showname>
+</display>
+<hasmorewebsinsite>1</hasmorewebsinsite>
+</item>

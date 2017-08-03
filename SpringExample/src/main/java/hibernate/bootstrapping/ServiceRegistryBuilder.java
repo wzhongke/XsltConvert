@@ -1,6 +1,6 @@
 package hibernate.bootstrapping;
 
-import hibernate.namestrategy.domain.Person;
+import hibernate.domain.namestrategy.domain.Person;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.BootstrapServiceRegistry;
 import org.hibernate.boot.registry.BootstrapServiceRegistryBuilder;
@@ -26,7 +26,7 @@ public class ServiceRegistryBuilder {
         // add the name of a class using JPA/Hibernate annotations for mapping.
         // differs from above in that accessing the Class is deferred which is
         // important if using runtime bytecode-enhancement
-        sources.addAnnotatedClassName("hibernate.namestrategy.domain.Account");
+        sources.addAnnotatedClassName("hibernate.domain.namestrategy.domain.Account");
         // Read package-level metadata.
         sources.addPackage("hibernate.association.domain");
     }

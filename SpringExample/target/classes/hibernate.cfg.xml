@@ -13,8 +13,12 @@
 
         <!-- Drop and re-create the database schema on startup -->
         <property name="hbm2ddl.auto">update</property>
-        <mapping class="hibernate.namestrategy.domain.Person" />
-        <mapping class="hibernate.namestrategy.domain.Account" />
+        <mapping class="hibernate.domain.namestrategy.domain.Person" />
+        <mapping class="hibernate.domain.generated.Event" />
+        <mapping class="hibernate.domain.any.IntegerProperty" />
+        <mapping class="hibernate.domain.any.StringProperty" />
+        <mapping class="hibernate.domain.any.PropertyHolder" />
+        <mapping class="hibernate.domain.namestrategy.domain.Account" />
         <mapping class="hibernate.association.domain.Person" />
         <mapping class="hibernate.association.domain.Phone" />
         <mapping class="hibernate.association.domain.Address"/>

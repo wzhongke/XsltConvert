@@ -18,10 +18,10 @@
         <property name="dataSource" ref="c3p0DataSource"/>
         <property name="configLocation" value="/hibernate.cfg.xml"/>
         <property name="implicitNamingStrategy">
-            <bean class="hibernate.namestrategy.UmisImplicitNamingStrategy" />
+            <bean class="hibernate.domain.namestrategy.UmisImplicitNamingStrategy" />
         </property>
         <property name="physicalNamingStrategy">
-            <bean class="hibernate.namestrategy.UmisPhysicalNamingStrategy" />
+            <bean class="hibernate.domain.namestrategy.UmisPhysicalNamingStrategy" />
         </property>
     </bean>
 
