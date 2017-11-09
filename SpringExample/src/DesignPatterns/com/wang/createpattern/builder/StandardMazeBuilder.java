@@ -1,6 +1,6 @@
 package com.wang.createpattern.builder;
 
-import com.wang.createpattern.primary.*;
+import com.wang.createpattern.*;
 
 import java.nio.file.DirectoryStream;
 
@@ -10,9 +10,11 @@ import java.nio.file.DirectoryStream;
 public class StandardMazeBuilder extends MazeBuilder{
 
     public StandardMazeBuilder(){}
+    @Override
     public void buildMaze(){
         currentMaze = new Maze();
     }
+    @Override
     public void buildRoom(int n){
         if(currentMaze.getRoom(n) == null) {
             Room room = new Room(n);
@@ -24,6 +26,7 @@ public class StandardMazeBuilder extends MazeBuilder{
             room.setSide(Direction.West, new Wall());
         }
     }
+    @Override
     public void buildDoor(int roomFrom, int roomTo){
         Room room1 = currentMaze.getRoom(roomFrom);
         Room room2 = currentMaze.getRoom(roomTo);
@@ -32,6 +35,7 @@ public class StandardMazeBuilder extends MazeBuilder{
         room1.setSide(commonWall(room1, room2), d);
         room2.setSide(commonWall(room2, room1), d);
     }
+    @Override
     public Maze getMaze(){return currentMaze;}
     private Direction commonWall(Room r1, Room r2){
         return Direction.South;

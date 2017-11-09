@@ -64,7 +64,9 @@ public class WebConfig extends WebMvcConfigurerAdapter {
 
     @Bean
     public UrlPathHelper urlPathHelper(){
-        return  new UrlPathHelper();
+        UrlPathHelper helper = new UrlPathHelper();
+        helper.setDefaultEncoding("UTF-8");
+        return helper;
     }
 
     @Bean

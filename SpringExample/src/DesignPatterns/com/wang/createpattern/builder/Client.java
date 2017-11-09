@@ -1,6 +1,6 @@
 package com.wang.createpattern.builder;
 
-import com.wang.createpattern.primary.Maze;
+import com.wang.createpattern.Maze;
 
 /**
  * Created by 王忠珂 on 2016/10/7.

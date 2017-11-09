@@ -95,7 +95,7 @@ public class HttpUtils {
     }
 
     /**
-     * POST 方式提交数据
+     * POST 方式提交 键值对 或 请求体 数据
      * @param postUrl url
      * @param params 提交参数
      * @param isHttps 是否为https

@@ -1,6 +1,5 @@
 package xml.parse;
 
-import com.sogou.umis.util.XMLParsUtil;
 import org.xml.sax.Attributes;
 
 import java.util.ArrayList;

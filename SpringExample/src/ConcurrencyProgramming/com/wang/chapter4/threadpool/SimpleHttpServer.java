@@ -1,12 +1,8 @@
 package com.wang.chapter4.threadpool;
 
-import com.sun.org.apache.bcel.internal.generic.IFLE;
-import com.wang.createpattern.builder.Client;
-
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketOption;
 
 /**
  * Created by 王忠珂 on 2016/11/24.

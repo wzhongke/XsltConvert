@@ -9,7 +9,7 @@
 >
 
     <bean class="spring.configuration.BeanConfig" />
-    <context:component-scan base-package="spring.controller" />
+    <context:component-scan base-package="spring.configuration" />
     <mvc:annotation-driven />
     <!-- **************************************************************** -->
     <!--  CONVERSION SERVICE                                              -->
@@ -53,12 +53,23 @@
         <!--<property name="order" value="1"/>-->
         <!--<property name="viewNames"  value="*.html, *.xhtml" />-->
     <!--</bean>-->
+
+    <bean id="mappingJacksonHttpMessageConverter"
+          class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+        <property name="supportedMediaTypes">
+            <list>
+                <value>text/html;charset=UTF-8</value>
+                <value>application/json;charset=utf-8</value>
+            </list>
+        </property>
+    </bean>
+
     <!-- As a best practice, we strongly encourage placing your JSP files in a directory under the 'WEB-INF' directory,
        so there can be no direct access by clients-->
     <!-- 不应给予UrlBasedViewResolver以及子类过高的优先级，因为其checkResource总是返回true，找不到不会再继续查找
         自定义的MultiView在查询不到时返回false，可以进行下一步-->
     <bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
-        <property name="viewClass" value="com.spring.view.MultiView"/>
+        <property name="viewClass" value="spring.view.MultiView"/>
         <property name="prefix" value="/WEB-INF/jsp/"/>
         <property name="suffix" value=".jsp"/>
     </bean>
@@ -87,7 +98,7 @@
             <list><ref bean="officeHoursInterceptor" /> </list>
         </property>
     </bean>
-    <bean id="officeHoursInterceptor" class="com.spring.intercepting.TimeBasedAccessInterceptor">
+    <bean id="officeHoursInterceptor" class="spring.intercepting.TimeBasedAccessInterceptor">
         <property name="openingTime" value="9" />
         <property name="closingTime" value="18" />
     </bean>

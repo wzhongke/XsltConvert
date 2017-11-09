@@ -13,8 +13,9 @@ public class Join {
         public void run() {
             while (i < 10) {
                 System.out.println( Thread.currentThread().getName() + ": " + i);
+                i++;
                 try {
-                    thread.join();
+                    thread.join(100);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
