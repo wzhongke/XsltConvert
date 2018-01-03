@@ -1,1 +1,0 @@
-1. 新旧UMIS的配置不同，在更新完旧版UMIS之后，需要运行mvoldcon.sh脚本来替换旧版UMIS配置

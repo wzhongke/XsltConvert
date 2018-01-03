@@ -1,8 +1,0 @@
-<mapping>
-    <class name="com.wang.marshaller.XmlMarshallerTest">
-        <map-to xml="settings"/>
-        <field name="age" type="integer">
-            <bind-xml name="age" node="element"/>
-        </field>
-    </class>
-</mapping>

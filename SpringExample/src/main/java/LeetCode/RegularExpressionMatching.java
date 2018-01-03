@@ -1,8 +1,4 @@
-package LeetCode;
-
-import java.util.ArrayDeque;
-import java.util.Queue;
-import java.util.Stack;
+package leetcode;
 
 /**
  * Implement regular expression matching with support for '.' and '*'.

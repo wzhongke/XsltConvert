@@ -11,9 +11,9 @@ import java.net.URI;
 public class BuildURI {
 
     public static void main(String [] args) {
-        UriComponents uriComponents = UriComponentsBuilder.
-                fromUriString("http://example.com/hotels/{hotel}/bookings/{booking}")
-                .build();
-        URI uri = uriComponents.expand("42", "21").encode().toUri();
+        int tmp = 8;
+        tmp |= 0 << 5;
+        tmp |= 0 << 6;
+        System.out.println(tmp);
     }
 }

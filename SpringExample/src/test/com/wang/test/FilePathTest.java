@@ -13,9 +13,18 @@ import java.nio.file.Paths;
 public class FilePathTest {
     @Test
     public void testProjectPath() throws IOException {
-        // 获取项目路径
-        File directory = new File("");
-        String courseFile = directory.getCanonicalPath();
-        System.out.println(courseFile);
+        String tmp = "1fd%kkd_";
+        tmp = tmp.replaceAll("([%_])", "\\\\\\\\$1");
+        System.out.println(tmp);
+    }
+
+    @Test
+    public void testPrint() {
+        for (int j =1; j<=5; j++) {
+            for (String s : new String[]{"djt","1.djt", "1.tc", "gd", "1.gd"}) {
+                System.out.println("tupu_tj:tj0"+j+".tupu." + s+ ".ted:3010");
+            }
+
+        }
     }
 }
